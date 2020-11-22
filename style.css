@@ -1,0 +1,50 @@
+body {
+  padding-top: 40px;
+  display: flex;
+  justify-content: center;
+  background-color: gray;
+}
+
+h1 {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.733);
+}
+
+.main {
+  display: block;
+  flex-direction: column;
+  width: 800px;
+  height: auto;
+  min-height: 100%;
+  overflow: auto;
+  background-color: rgba(1, 1, 1, 0.2);
+  border-radius: 0 0 20px 20px;
+}
+
+.releases {
+  padding: 0 20px 20px 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 4px;
+}
+
+.releases:before {
+  content: '';
+  width: 0;
+  padding-bottom: 100%;
+  grid-row: 1 / 1;
+  grid-column: 1 / 1;
+}
+
+.releases > *:first-child {
+  grid-row: 1 / 1;
+  grid-column: 1 / 1;
+}
+
+.card {
+  background-color: gray;
+  width: auto;
+  height: 150px;
+  font-size: 1px;
+}
