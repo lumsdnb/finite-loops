@@ -1,4 +1,4 @@
-# finite-loops
+# finite loops
 
 bass music label
-music at https://fntlps.bandcamp.com
+music at https://finiteloops.bandcamp.com
