@@ -1,3 +1,27 @@
+* {
+  box-sizing: border-box;
+  font-size: 10px;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+:root {
+  /* Font Sizes */
+  --baseFontSize: 1rem;
+  --baseNavSize: 0.64rem;
+  --smallFontSize: 0.8rem;
+  --smallestFontSize: 0.512rem;
+
+  --xtra-big-ass-heading: 6.854rem;
+  --xtra-heading: 2.441rem;
+  --heading-1: 1.953rem;
+  --heading-2: 1.563rem;
+  --heading-3: 1.25rem;
+  --heading-4: var(--baseFontSize);
+  --heading-5: var(--smallFontSize);
+  --heading-6: 0.64rem;
+  --heading-7: var(--smallestFontSize);
+}
+
 body {
   padding-top: 40px;
   display: flex;
@@ -5,9 +29,16 @@ body {
   background-color: #999999;
 }
 
-h1 {
+h2 {
+  font-size: var(--xtra-big-ass-heading);
   text-align: center;
   color: rgba(255, 255, 255, 0.733);
+}
+
+.title-lower {
+  line-height: 0.5rem;
+  position: relative;
+  bottom: 10rem;
 }
 
 .logo {
@@ -29,7 +60,7 @@ h1 {
 .releases {
   padding: 0 20px 20px 20px;
   display: flex;
-  grid-template-columns: 1fr 1fr 1fr);
+  grid-template-columns: 1fr 1fr 1fr;
   grid-auto-rows: 1fr;
   gap: 4px;
   object-fit: cover;
@@ -49,11 +80,4 @@ h1 {
 
 .coverart {
   max-width: 100%;
-}
-
-.card {
-  background-color: gray;
-  width: auto;
-  height: auto;
-  font-size: 1px;
 }
