@@ -1,4 +1,4 @@
-import { SampleData } from '../constants/samples';
+//import { SampleData } from '../constants/samples';
 
 // Define the structure for playback instances
 interface PlaybackInstance {
@@ -56,8 +56,8 @@ export class AudioPlaybackManager extends EventTarget {
 
         if (this.isBpmSyncEnabled) {
             // Calculate duration in beats based on BPM
-            const secondsPerBeat = 60 / this.bpm;
-            const durationInBeats = bufferDuration / (buffer.sampleRate / this.bpm); // This is a rough estimate, needs refinement
+//            const secondsPerBeat = 60 / this.bpm;
+//            const durationInBeats = bufferDuration / (buffer.sampleRate / this.bpm); // This is a rough estimate, needs refinement
             // A more accurate way to sync: schedule based on beats
             // For now, let's assume a simple BPM sync where the sample plays at its normal rate but we can track progress against BPM
             // A more advanced sequencer would schedule events precisely.

@@ -1,18 +1,20 @@
-import { LitElement } from 'lit';
+import { LitElement } from "lit";
 export declare class SampleWaveform extends LitElement {
     sampleUrl: string;
-    sampleName: string;
-    private _waveform?;
-    private _waveformContainer;
+    waveColor: string;
+    height: number;
+    playheadPosition: number;
     static styles: import("lit").CSSResult;
+    private canvasRef;
+    peaks: number[];
+    resizeObserver: ResizeObserver | null;
+    isLoading: boolean;
+    constructor();
     render(): import("lit").TemplateResult<1>;
-    updated(changed: Map<string, unknown>): void;
-    private _initWaveform;
+    firstUpdated(): void;
     disconnectedCallback(): void;
-    private _loadSample;
-}
-declare global {
-    interface HTMLElementTagNameMap {
-        'sample-waveform': SampleWaveform;
-    }
+    updated(changed: Map<string | number | symbol, unknown>): void;
+    _fetchAudio(): Promise<void>;
+    _getPeaks(data: Float32Array, samples: number): number[];
+    _drawWaveform(): void;
 }

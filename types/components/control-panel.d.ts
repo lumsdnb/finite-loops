@@ -12,7 +12,6 @@ export declare class ControlPanel extends LitElement {
     render(): import("lit").TemplateResult<1>;
     private _handleSampleEditClick;
     private _handleTimeBpmClick;
-    private _handleModeChange;
 }
 declare global {
     interface HTMLElementTagNameMap {
