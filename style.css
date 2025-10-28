@@ -3,6 +3,16 @@
   font-size:16px;
   font-family: 'Times New Roman', Times, serif;
 }
+html {
+  --sp-background: #2a2a2a;
+  --sp-foreground: #f5f5f5;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--sp-background);
+}
 
 :root {
 
@@ -15,6 +25,7 @@
   --heading-5: var(--smallFontSize);
   --heading-6: 0.64rem;
   --heading-7: var(--smallestFontSize);
+
 
   /* SP-404 Button Theme Variables */
   --sp-button-color: hsl(214.29deg 5.53% 53.08%);
