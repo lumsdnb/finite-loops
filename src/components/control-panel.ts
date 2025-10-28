@@ -10,6 +10,8 @@ export class ControlPanel extends LitElement {
   @property({ type: Number }) bpm = 120;
   @property({ type: String }) mode: 'performance' | 'sequencer' = 'performance';
 
+  // @property({type: Boolean}) isLoading= false
+
   static styles = css`
     :host {
       display: block;
@@ -166,6 +168,7 @@ export class ControlPanel extends LitElement {
       justify-content: center;
       align-items: center;
       gap: 0.5rem;
+      border-radius: 50%;
     }
 
     .bank .button-group {
@@ -274,6 +277,7 @@ export class ControlPanel extends LitElement {
       <sample-waveform
         .sampleUrl=${`/samples/${this.currentSampleName}.wav`}
         .sampleName=${this.currentSampleName}
+        data-sample-index=${this.currentPadIndex}
       ></sample-waveform>
     `
     : html`<span class="no-sample">No sample selected</span>`}
@@ -363,15 +367,15 @@ private _handleSampleEditClick(e:Event){
     }));
   }
 
-  private _handleModeChange(e: Event) {
-    const select = e.target as HTMLSelectElement;
-    const newMode = select.value as 'performance' | 'sequencer';
-    this.dispatchEvent(new CustomEvent('mode-change', {
-      detail: { mode: newMode },
-      bubbles: true,
-      composed: true
-    }));
-  }
+  // private _handleModeChange(e: Event) {
+  //   const select = e.target as HTMLSelectElement;
+  //   const newMode = select.value as 'performance' | 'sequencer';
+  //   this.dispatchEvent(new CustomEvent('mode-change', {
+  //     detail: { mode: newMode },
+  //     bubbles: true,
+  //     composed: true
+  //   }));
+  // }
 }
 
 declare global {

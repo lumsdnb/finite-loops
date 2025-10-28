@@ -7,6 +7,7 @@ export class SampleWaveform extends LitElement {
   @property({ type: String }) sampleUrl = '';
   @property({ type: String }) waveColor = '#4d98b3ff';
   @property({ type: Number }) height = 100;
+  @property({ type: Number }) playheadPosition = 0;
 
   static styles = css`
     :host {
@@ -17,6 +18,8 @@ export class SampleWaveform extends LitElement {
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       overflow: hidden;
       background-color: transparent;
+        border-radius: 50%;
+
     }
     canvas {
       width: 100%;
@@ -101,8 +104,8 @@ export class SampleWaveform extends LitElement {
   }
 
   _drawWaveform() {
-  const canvas = this.canvasRef.value;
-  if (!canvas || this.peaks.length === 0) return;
+    const canvas = this.canvasRef.value;
+    if (!canvas || this.peaks.length === 0) return;
 
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -117,6 +120,13 @@ export class SampleWaveform extends LitElement {
 
   const center = height / 2;
   const step = width / this.peaks.length;
+
+  // Draw the playhead
+  if (this.playheadPosition > 0 && this.playheadPosition < 1) {
+    const playheadX = this.playheadPosition * width;
+    ctx.fillStyle = 'red'; // Color of the playhead
+    ctx.fillRect(playheadX, 0, 2, height); // Draw a vertical line
+  }
 
   ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = this.waveColor;

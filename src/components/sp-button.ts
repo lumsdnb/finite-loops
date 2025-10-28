@@ -2,7 +2,7 @@ import { LitElement, html, css, CSSResult } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
 @customElement('sp-button')
-export class SpButton extends LitElement {
+export class SpButton extends LitElement { // 👈 Make sure to export the class
   @property({ type: String }) label = '';
   @property({ type: Boolean }) active = false;
   @property({ type: String }) variant: 'square' | 'round' = 'square';
@@ -75,8 +75,7 @@ export class SpButton extends LitElement {
         inset 0 1px 3px rgba(255, 255, 255, 0.8),
         inset 0 -2px 3px var(--sp-button-shadow, rgba(0, 0, 0, 0.2));
     }
-
-    button:active,
+button:active,
     button.active {
       transform: translateY(1px);
       background: linear-gradient(to bottom, 
@@ -84,7 +83,6 @@ export class SpButton extends LitElement {
         #d0d0d0 100%);
       box-shadow: 
         inset 0 0 200px -5px var(--sp-button-active-glow, rgba(255, 107, 107, 0.7)),
-        /* The subtle press-down shadow for depth */
         inset 0 2px 4px var(--sp-button-shadow, rgba(0, 0, 0, 0.2));
     }
 
@@ -97,32 +95,15 @@ export class SpButton extends LitElement {
     }
 
     button.active {
-      transition: background 0ms, box-shadow 60ms ease, transform 60ms ease;
       --sp-button-active-glow: var(--sp-button-highlight, rgba(255, 107, 107, 0.7));
     }
   `];
 
-  private _handleKeyDown(e: KeyboardEvent) {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      this.active = true;
-    }
-  }
-
-  private _handleKeyUp(e: KeyboardEvent) {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      this.active = false;
-      this.dispatchEvent(new CustomEvent('click'));
-    }
-  }
 
   render() {
     return html`
       <button
         class="${[this.variant, this.size, this.active ? 'active' : ''].filter(Boolean).join(' ')}"
-        @keydown="${this._handleKeyDown}"
-        @keyup="${this._handleKeyUp}"
         aria-pressed="${this.active}"
         style="${this.highlight ? `--sp-button-highlight: ${this.highlight};` : ''}"
         @click=${this._handleClick}
