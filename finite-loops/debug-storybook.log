@@ -1,0 +1,78 @@
+[22:03:38.332] [INFO] [36mInitializing Storybook[39m
+[22:03:39.061] [DEBUG] Getting package.json info for C:/Users/Admin/Documents/github/finite-loops/finite-loops/package.json...
+[22:03:39.062] [DEBUG] Getting CLI versions from NPM for storybook...
+[22:03:39.062] [DEBUG] Executing command: pnpm info storybook version
+[22:03:39.183] [INFO] Adding Storybook version 10.1.11 to your project
+[22:03:39.187] [DEBUG] Project type detected: sveltekit
+[22:03:39.187] [DEBUG] Using cached package.json for C:\Users\Admin\Documents\github\finite-loops\finite-loops\package.json...
+[22:03:39.191] [INFO] Framework detected: sveltekit
+[22:03:39.192] [DEBUG] Getting installed version for vitest...
+[22:03:39.192] [DEBUG] Executing command: pnpm list "vitest" --json --depth=99
+[22:03:39.254] [DEBUG] Getting installed version for msw...
+[22:03:39.254] [DEBUG] Executing command: pnpm list "msw" --json --depth=99
+[22:03:45.774] [PROMPT] New to Storybook? {"choice":true}
+[22:03:45.775] [INFO] Storybook collects completely anonymous usage telemetry. We use it to shape Storybook's roadmap and prioritize features. You can learn more, including how to opt out, at https://storybook.js.org/telemetry
+[22:03:46.667] [INFO] base-generator-task-start: Generating Storybook configuration
+[22:03:46.670] [DEBUG] Using cached package.json for C:\Users\Admin\Documents\github\finite-loops\finite-loops\package.json...
+[22:03:46.671] [DEBUG] Using cached package.json for C:\Users\Admin\Documents\github\finite-loops\finite-loops\package.json...
+[22:03:46.671] [DEBUG] Using cached package.json for C:\Users\Admin\Documents\github\finite-loops\finite-loops\package.json...
+[22:03:46.676] [INFO] base-generator-task: - Configuring ESLint plugin
+[22:03:46.678] [DEBUG] Detected flat config at C:\Users\Admin\Documents\github\finite-loops\finite-loops\eslint.config.js
+[22:03:46.786] [DEBUG] Getting CLI versions from NPM for storybook...
+[22:03:46.786] [DEBUG] Executing command: pnpm info storybook version
+[22:03:46.813] [DEBUG] Getting CLI versions from NPM for @storybook/sveltekit...
+[22:03:46.813] [DEBUG] Executing command: pnpm info @storybook/sveltekit version
+[22:03:46.846] [DEBUG] Getting CLI versions from NPM for @storybook/addon-svelte-csf...
+[22:03:46.846] [DEBUG] Executing command: pnpm info @storybook/addon-svelte-csf version
+[22:03:46.879] [DEBUG] Getting CLI versions from NPM for @chromatic-com/storybook...
+[22:03:46.879] [DEBUG] Executing command: pnpm info @chromatic-com/storybook version
+[22:03:46.911] [DEBUG] Getting CLI versions from NPM for @storybook/addon-vitest...
+[22:03:46.911] [DEBUG] Executing command: pnpm info @storybook/addon-vitest version
+[22:03:46.944] [DEBUG] Getting CLI versions from NPM for @storybook/addon-a11y...
+[22:03:46.944] [DEBUG] Executing command: pnpm info @storybook/addon-a11y version
+[22:03:46.981] [DEBUG] Getting CLI versions from NPM for @storybook/addon-docs...
+[22:03:46.981] [DEBUG] Executing command: pnpm info @storybook/addon-docs version
+[22:03:47.017] [DEBUG] Getting CLI versions from NPM for eslint-plugin-storybook...
+[22:03:47.017] [DEBUG] Executing command: pnpm info eslint-plugin-storybook version
+[22:03:47.082] [INFO] base-generator-task: - Configuring main.ts
+[22:03:47.084] [INFO] base-generator-task: - Configuring preview.ts
+[22:03:47.086] [INFO] base-generator-task: - Adding Storybook command to package.json
+[22:03:47.087] [DEBUG] Getting package.json info for C:/Users/Admin/Documents/github/finite-loops/finite-loops/package.json...
+[22:03:47.087] [DEBUG] Using cached package.json for C:\Users\Admin\Documents\github\finite-loops\finite-loops\package.json...
+[22:03:47.088] [INFO] base-generator-task: - Copying framework templates
+[22:03:47.136] [DEBUG] Executing command: pnpm config get registry
+[22:03:47.202] [ERROR] [38;2;241;97;97mError: Cannot find @storybook\sveltekit\package.json, Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@storybook/sveltekit' imported from C:\Users\Admin\AppData\Local\pnpm-cache\dlx\6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5\19b71129c29-2fbc\node_modules\.pnpm\storybook@10.1.11_@testing-_542812fe79983dab9975b048bc99184d\node_modules\storybook\dist\_node-chunks\chunk-O7UZQAUS.js
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:256:9)
+    at packageResolve (node:internal/modules/esm/resolve:768:81)
+    at moduleResolve (node:internal/modules/esm/resolve:854:18)
+    at defaultResolve (node:internal/modules/esm/resolve:984:11)
+    at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:780:12)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:704:25)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:739:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:762:52)
+    at Object.resolve (node:internal/modules/esm/initialize_import_meta:35:25)
+    at importMetaResolve (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/storybook@10.1.11_@testing-_542812fe79983dab9975b048bc99184d/node_modules/storybook/dist/_node-chunks/chunk-O7UZQAUS.js:717:48)
+
+Error: Command failed with exit code 1: pnpm.cmd config get registry
+Der Befehl "pnpm.cmd" ist entweder falsch geschrieben oder
+konnte nicht gefunden werden.
+    at makeError (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/storybook@10.1.11_@testing-_542812fe79983dab9975b048bc99184d/node_modules/storybook/dist/_node-chunks/chunk-Q4DOC7HF.js:12912:95)
+    at file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/storybook@10.1.11_@testing-_542812fe79983dab9975b048bc99184d/node_modules/storybook/dist/_node-chunks/chunk-Q4DOC7HF.js:13486:27
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async PNPMProxy.getRegistryURL (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/storybook@10.1.11_@testing-_542812fe79983dab9975b048bc99184d/node_modules/storybook/dist/_node-chunks/chunk-Q4DOC7HF.js:14113:17)
+    at async resolveUsingBranchInstall (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/storybook@10.1.11_@testing-_542812fe79983dab9975b048bc99184d/node_modules/storybook/dist/_node-chunks/chunk-JLFR6DEF.js:5382:15)
+    at async getRendererDir (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/storybook@10.1.11_@testing-_542812fe79983dab9975b048bc99184d/node_modules/storybook/dist/_node-chunks/chunk-JLFR6DEF.js:5405:12)
+    at async templatePath (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/storybook@10.1.11_@testing-_542812fe79983dab9975b048bc99184d/node_modules/storybook/dist/_node-chunks/chunk-JLFR6DEF.js:5483:19)
+    at async copyTemplateFiles (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/storybook@10.1.11_@testing-_542812fe79983dab9975b048bc99184d/node_modules/storybook/dist/_node-chunks/chunk-JLFR6DEF.js:5498:17)
+    at async baseGenerator (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/create-storybook@10.1.11_@t_ffdca5757f436ccc9688634668e224a3/node_modules/create-storybook/dist/_node-chunks/chunk-C75MJVFW.js:1277:152)
+    at async GeneratorExecutionCommand.executeProjectGenerator (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/create-storybook@10.1.11_@t_ffdca5757f436ccc9688634668e224a3/node_modules/create-storybook/dist/_node-chunks/chunk-C75MJVFW.js:1345:101)[39m
+    at getRendererDir (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/storybook@10.1.11_@testing-_542812fe79983dab9975b048bc99184d/node_modules/storybook/dist/_node-chunks/chunk-JLFR6DEF.js:5409:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async templatePath (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/storybook@10.1.11_@testing-_542812fe79983dab9975b048bc99184d/node_modules/storybook/dist/_node-chunks/chunk-JLFR6DEF.js:5483:19)
+    at async copyTemplateFiles (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/storybook@10.1.11_@testing-_542812fe79983dab9975b048bc99184d/node_modules/storybook/dist/_node-chunks/chunk-JLFR6DEF.js:5498:17)
+    at async baseGenerator (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/create-storybook@10.1.11_@t_ffdca5757f436ccc9688634668e224a3/node_modules/create-storybook/dist/_node-chunks/chunk-C75MJVFW.js:1277:152)
+    at async GeneratorExecutionCommand.executeProjectGenerator (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/create-storybook@10.1.11_@t_ffdca5757f436ccc9688634668e224a3/node_modules/create-storybook/dist/_node-chunks/chunk-C75MJVFW.js:1345:101)
+    at async GeneratorExecutionCommand.execute (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/create-storybook@10.1.11_@t_ffdca5757f436ccc9688634668e224a3/node_modules/create-storybook/dist/_node-chunks/chunk-C75MJVFW.js:1367:27)
+    at async doInitiate (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/create-storybook@10.1.11_@t_ffdca5757f436ccc9688634668e224a3/node_modules/create-storybook/dist/_node-chunks/chunk-C75MJVFW.js:2279:68)
+    at async file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/create-storybook@10.1.11_@t_ffdca5757f436ccc9688634668e224a3/node_modules/create-storybook/dist/_node-chunks/chunk-C75MJVFW.js:2322:20
+    at async withTelemetry (file:///C:/Users/Admin/AppData/Local/pnpm-cache/dlx/6388c0b48dd68a2cdfdbea8d43073d7a4a28119a60283273c874f6ac772d98e5/19b71129c29-2fbc/node_modules/.pnpm/storybook@10.1.11_@testing-_542812fe79983dab9975b048bc99184d/node_modules/storybook/dist/_node-chunks/chunk-2372JZ52.js:209:12)
