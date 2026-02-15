@@ -9,25 +9,25 @@ export const artists: Artist[] = [
 	{
 		name: 'dreadmaul',
 		slug: 'dreadmaul',
-		bio: 'Beatmaker and sound designer. Heavy low-end textures and fractured rhythms.',
+		bio: 'Bio coming soon.',
 		releases: ['fntlps3', 'fntlps2']
 	},
 	{
 		name: 'lums',
 		slug: 'lums',
-		bio: 'Producer and multi-instrumentalist. Layered atmospherics and warped samples.',
+		bio: 'Bio coming soon.',
 		releases: ['fntlps3', 'fntlps2', 'fntlps1']
 	},
 	{
 		name: 'moqwa',
 		slug: 'moqwa',
-		bio: 'Electronic producer. Modular synthesis and generative compositions.',
+		bio: 'Bio coming soon.',
 		releases: ['fntlps3', 'fntlps2']
 	},
 	{
 		name: '[-CRBRL-CTS-]',
 		slug: 'crbrl-cts',
-		bio: 'Experimental producer and remixer. Glitch, noise, and digital decay.',
+		bio: 'Bio coming soon.',
 		releases: ['fntlps3', 'fntlps1']
 	}
 ];
