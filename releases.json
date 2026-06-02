@@ -1,0 +1,34 @@
+{
+  "release": [
+    {
+      "id": "FNTLPS1",
+      "date": "2019-09-24T10:00:00.000Z",
+      "contributors": ["[[-CRBRL-CTS-]]", "lums"],
+      "sha256": "133f57b28e6e3f508b5ecb7035c4fc1870e26021eeb97ee0455687520fd2b0a3",
+      "tracks": { "A": "293IDEV0170", "B": "Solar ([[-CRBRL-CTS-]] remix)" }
+    },
+
+    {
+      "id": "FNTLPS2",
+      "date": "2020-01-07T10:00:00.000Z",
+      "contributors": ["dreadmaul", "lums", "moqwa"],
+      "sha256": "cfe0cc22404de69b7e76d458219671d14815a53fecbaafae37fba7bcc2a59497",
+      "tracks": { "A": "ed88d25b86", "B": "57df8ff685" }
+    },
+
+    {
+      "id": "FNTLPS3",
+      "date": "2020-03-20T10:00:00.000Z",
+      "contributors": ["dreadmaul", "lums", "moqwa"],
+      "sha256": "08d37cf85e8b43c1d7f53149ae484d63821303a5ff51afd66e23052130b5c13b",
+      "tracks": {
+        "A": "fc96170",
+        "B": "aed285",
+        "C": "281585",
+        "D": "538685",
+        "E": "3d6c172",
+        "F": "0507168"
+      }
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+import { LitElement } from "lit";
+import "./components/top-nav";
+export declare class FiniteLoops extends LitElement {
+    private activeRegionIndex;
+    private isDetailOpen;
+    private _viewport;
+    private get worldSvg();
+    private readonly regions;
+    private get _activeRegion();
+    connectedCallback(): void;
+    disconnectedCallback(): void;
+    private _preventSelection;
+    firstUpdated(): void;
+    private _clampRegionIndex;
+    private _setActiveRegion;
+    private _syncHash;
+    private _scrollViewportToRegion;
+    private _goToRegion;
+    private _scrollToRegion;
+    private _handleKeyDown;
+    private _handleWheel;
+    private _handleScroll;
+    private _handleNavRequest;
+    private _toggleDetail;
+    private _hydrateFromHash;
+    static styles: import("lit").CSSResult;
+    render(): import("lit").TemplateResult<1>;
+    private _caretSvg;
+    private _nextRegion;
+    private _prevRegion;
+}

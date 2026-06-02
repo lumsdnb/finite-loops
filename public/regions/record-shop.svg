@@ -1,0 +1,27 @@
+<svg viewBox="0 0 1440 400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1440" height="400" fill="#e7e7e7"/>
+
+  <!-- tight buildings -->
+  <g fill="#111">
+    <rect x="120" y="100" width="160" height="300"/>
+    <rect x="300" y="160" width="90" height="240"/>
+    <rect x="420" y="80" width="200" height="320"/>
+    <rect x="680" y="140" width="120" height="260"/>
+  </g>
+
+  <!-- alley gap -->
+  <rect x="560" y="0" width="80" height="400" fill="#e7e7e7"/>
+
+  <!-- fire escape lines -->
+  <g stroke="#111" stroke-width="4" fill="none">
+    <path d="M140 120 V360"/>
+    <path d="M160 140 V360"/>
+    <path d="M460 100 V360"/>
+  </g>
+
+  <!-- record crates -->
+  <g fill="#111">
+    <rect x="540" y="280" width="40" height="40"/>
+    <rect x="590" y="300" width="40" height="40"/>
+  </g>
+</svg>

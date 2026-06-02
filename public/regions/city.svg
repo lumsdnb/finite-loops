@@ -1,0 +1,20 @@
+<svg viewBox="0 0 1440 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- sky haze -->
+  <rect width="1440" height="400" fill="#e7e7e7"/>
+
+  <!-- far skyline -->
+  <g fill="#111">
+    <rect x="80" y="120" width="120" height="280"/>
+    <rect x="240" y="80" width="160" height="320"/>
+    <rect x="460" y="140" width="90" height="260"/>
+    <rect x="620" y="60" width="200" height="340"/>
+  </g>
+
+  <!-- overpass -->
+  <path d="M0 260 H1440 V300 H0 Z" fill="#111"/>
+
+  <!-- bridge cutouts -->
+  <rect x="120" y="270" width="200" height="10" fill="#e7e7e7"/>
+  <rect x="420" y="270" width="260" height="10" fill="#e7e7e7"/>
+  <rect x="820" y="270" width="300" height="10" fill="#e7e7e7"/>
+</svg>

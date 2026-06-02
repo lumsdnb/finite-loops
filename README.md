@@ -1,38 +1,97 @@
-# sv
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+# SP-404 Style Lit & TypeScript Web App
 
-## Creating a project
+This project creates a web-based beat machine inspired by the SP-404, using Lit, TypeScript, and modern browser APIs.
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Project Setup
+- [x] Initialize project with Vite, Lit, and TypeScript
+- [x] Basic directory structure
+- [ ] Configure TypeScript and Vite
 
-```sh
-# create a new project in the current directory
-npx sv create
+## Core Features
+- [ ] 4x4 Pad Grid Implementation
+  - [x] Basic grid layout
+  - [ ] Sample trigger functionality
+  - [ ] Visual feedback system
+- [ ] Sample Loading System
+  - [ ] File upload interface
+  - [ ] Audio buffer management
+  - [ ] Sample preview
+- [ ] Live Performance Mode
+  - [ ] Mouse click triggers
+  - [ ] Keyboard input mapping
+  - [ ] MIDI controller support
+- [ ] Pattern Sequencer
+  - [ ] 16-step pattern interface
+  - [ ] Pattern storage
+  - [ ] Real-time playback
+- [ ] Visual Feedback System
+  - [ ] Pad activation effects
+  - [ ] Sequencer position indicator
+  - [ ] Mode status display
+- [ ] Tempo Control
+  - [ ] BPM adjustment interface
+  - [ ] Timing system implementation
+## Component Development
 
-# create a new project in my-app
-npx sv create my-app
-```
+### Main Application (`sp-app`)
+- [x] Component scaffolding
+- [ ] Initialize AudioContext
+- [ ] Set up Web MIDI API integration
+- [ ] Implement global keyboard event handlers
+- [ ] Create state management for:
+  - [ ] Sample storage
+  - [ ] Pattern data
+  - [ ] BPM control
+  - [ ] Mode switching (performance/sequencer)
+  - [ ] Step sequencer position
 
-## Developing
+### Pad Grid (`pad-grid`)
+- [x] Component scaffolding
+- [ ] Create 4x4 grid layout
+- [ ] Implement pad rendering logic
+- [ ] Set up event delegation system
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+### Individual Pad (`drum-pad`)
+- [x] Component scaffolding
+- [ ] Design pad visualization
+- [ ] Implement click handling
+- [ ] Add active state visualization
+- [ ] Add keyboard binding support
+- [ ] Add MIDI binding support
 
-```sh
-npm run dev
+### Control Panel (`control-panel`)
+- [x] Component scaffolding
+- [ ] Create file upload interface
+- [ ] Add BPM control
+- [ ] Add mode switching buttons
+- [ ] Style control panel elements
+## Additional Tasks
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+### Audio System Implementation
+- [ ] Initialize Web Audio API context
+- [ ] Set up audio buffer management
+- [ ] Implement sample loading system
+- [ ] Create playback mechanism
+- [ ] Add effects processing pipeline
 
-## Building
+### MIDI Integration
+- [ ] Set up Web MIDI API
+- [ ] Implement device detection
+- [ ] Create input message handling
+- [ ] Add MIDI-to-pad mapping
+- [ ] Implement MIDI learn functionality
 
-To create a production version of your app:
+### Testing & Documentation
+- [ ] Write component tests
+- [ ] Test audio system
+- [ ] Verify MIDI integration
+- [ ] Create user documentation
+- [ ] Document API and architecture
 
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+### Performance Optimization
+- [ ] Optimize audio buffer management
+- [ ] Improve event handling efficiency
+- [ ] Implement sample preloading
+- [ ] Optimize rendering performance
+- [ ] Profile and benchmark critical paths

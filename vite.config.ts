@@ -1,9 +1,7 @@
-import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-	server: {
-		allowedHosts: [ "finiteloops.net"]
-	},
-	plugins: [sveltekit()]
+  build: {
+    target: 'esnext'
+  }
 });

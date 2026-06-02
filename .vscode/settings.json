@@ -1,4 +1,19 @@
 {
-    "workbench.colorCustomizations": {},
+    "workbench.colorCustomizations": {
+        "titleBar.activeBackground": "#e4ccff",
+        "titleBar.activeForeground": "#000000",
+        "titleBar.inactiveBackground": "#e4ccff",
+        "titleBar.inactiveForeground": "#000000",
+        "titleBar.border": "#e4ccff",
+        "activityBar.background": "#e4ccff",
+        "activityBar.foreground": "#000000",
+        "statusBar.background": "#e4ccff",
+        "statusBar.foreground": "#000000",
+        "statusBar.debuggingBackground": "#e4ccff",
+        "statusBar.debuggingForeground": "#000000",
+        "tab.activeBorder": "#e4ccff",
+        "iLoveWorkSpaceColors": true,
+        "iLoveWorkSpaceRandom": false
+    },
     "gitConfigUser.selectedProfile": "lums"
 }
