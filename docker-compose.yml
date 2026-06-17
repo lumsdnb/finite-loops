@@ -1,0 +1,6 @@
+services:
+  demucs:
+    build: ./services/demucs
+    ports:
+      - "127.0.0.1:8001:8000"
+    restart: unless-stopped

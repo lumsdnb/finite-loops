@@ -1,97 +1,64 @@
+ 
+# Finite Loops
 
-# SP-404 Style Lit & TypeScript Web App
+Music collective website built with SvelteKit.
 
-This project creates a web-based beat machine inspired by the SP-404, using Lit, TypeScript, and modern browser APIs.
+## Prerequisites
 
-## Project Setup
-- [x] Initialize project with Vite, Lit, and TypeScript
-- [x] Basic directory structure
-- [ ] Configure TypeScript and Vite
+- Node.js
+- Docker (for the stem separator tool)
 
-## Core Features
-- [ ] 4x4 Pad Grid Implementation
-  - [x] Basic grid layout
-  - [ ] Sample trigger functionality
-  - [ ] Visual feedback system
-- [ ] Sample Loading System
-  - [ ] File upload interface
-  - [ ] Audio buffer management
-  - [ ] Sample preview
-- [ ] Live Performance Mode
-  - [ ] Mouse click triggers
-  - [ ] Keyboard input mapping
-  - [ ] MIDI controller support
-- [ ] Pattern Sequencer
-  - [ ] 16-step pattern interface
-  - [ ] Pattern storage
-  - [ ] Real-time playback
-- [ ] Visual Feedback System
-  - [ ] Pad activation effects
-  - [ ] Sequencer position indicator
-  - [ ] Mode status display
-- [ ] Tempo Control
-  - [ ] BPM adjustment interface
-  - [ ] Timing system implementation
-## Component Development
+## Developing
 
-### Main Application (`sp-app`)
-- [x] Component scaffolding
-- [ ] Initialize AudioContext
-- [ ] Set up Web MIDI API integration
-- [ ] Implement global keyboard event handlers
-- [ ] Create state management for:
-  - [ ] Sample storage
-  - [ ] Pattern data
-  - [ ] BPM control
-  - [ ] Mode switching (performance/sequencer)
-  - [ ] Step sequencer position
+Install dependencies and start the dev server:
 
-### Pad Grid (`pad-grid`)
-- [x] Component scaffolding
-- [ ] Create 4x4 grid layout
-- [ ] Implement pad rendering logic
-- [ ] Set up event delegation system
+```sh
+npm install
+npm run dev
+```
 
-### Individual Pad (`drum-pad`)
-- [x] Component scaffolding
-- [ ] Design pad visualization
-- [ ] Implement click handling
-- [ ] Add active state visualization
-- [ ] Add keyboard binding support
-- [ ] Add MIDI binding support
+## Building
 
-### Control Panel (`control-panel`)
-- [x] Component scaffolding
-- [ ] Create file upload interface
-- [ ] Add BPM control
-- [ ] Add mode switching buttons
-- [ ] Style control panel elements
-## Additional Tasks
+```sh
+npm run build
+```
 
-### Audio System Implementation
-- [ ] Initialize Web Audio API context
-- [ ] Set up audio buffer management
-- [ ] Implement sample loading system
-- [ ] Create playback mechanism
-- [ ] Add effects processing pipeline
+Preview the production build with `npm run preview`.
 
-### MIDI Integration
-- [ ] Set up Web MIDI API
-- [ ] Implement device detection
-- [ ] Create input message handling
-- [ ] Add MIDI-to-pad mapping
-- [ ] Implement MIDI learn functionality
+## Stem Separator Service
 
-### Testing & Documentation
-- [ ] Write component tests
-- [ ] Test audio system
-- [ ] Verify MIDI integration
-- [ ] Create user documentation
-- [ ] Document API and architecture
+The `/tools/stems` page provides AI-powered audio stem separation using [Demucs](https://github.com/adefossez/demucs) (Meta's music source separation model). It runs as a Docker service that SvelteKit proxies to.
 
-### Performance Optimization
-- [ ] Optimize audio buffer management
-- [ ] Improve event handling efficiency
-- [ ] Implement sample preloading
-- [ ] Optimize rendering performance
-- [ ] Profile and benchmark critical paths
+### Setup
+
+Build and start the Demucs service:
+
+```sh
+docker compose build    # ~5GB image (includes PyTorch + model weights)
+docker compose up -d
+```
+
+Verify it's running:
+
+```sh
+curl http://localhost:8001/health
+```
+
+The service binds to `127.0.0.1:8001` (localhost only). SvelteKit proxies requests from `/api/separate` to the Docker service, so the port is never exposed publicly.
+
+### Usage
+
+1. Start the Demucs service with `docker compose up -d`
+2. Start the SvelteKit dev server with `npm run dev`
+3. Navigate to `/tools/stems`
+4. Upload an audio file (mp3, wav, flac, or ogg — max 50MB)
+5. Select which stems you want (vocals, drums, bass, other)
+6. Click "Separate" and wait for processing (CPU separation can take a few minutes)
+7. Download the ZIP containing your stems
+
+### Stopping the service
+
+```sh
+docker compose down
+```
+
