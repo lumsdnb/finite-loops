@@ -18,11 +18,7 @@ export class FiniteLoops extends LitElement {
 
   @query(".world-viewport") private _viewport!: HTMLElement;
 
-  private get worldSvg() {
-    return window.innerWidth < 768
-      ? "/regions/full-world-mobile.svg"
-      : "/regions/full-world-desktop.svg";
-  }
+  private readonly worldSvg = "/regions/full-world-desktop.svg";
 
   private readonly regions: Region[] = [
     {
@@ -325,11 +321,14 @@ export class FiniteLoops extends LitElement {
 
     .panorama-bg {
       position: absolute;
-      top: 0;
+      bottom: 0;
       left: 0;
-      height: 100%;
+      width: 100%;
+      min-height: 50%;
       z-index: 0;
       pointer-events: none;
+      display: flex;
+      align-items: flex-end;
 
       transition:
         transform var(--lums-transition-lg) cubic-bezier(0.22, 1, 0.36, 1),
@@ -339,8 +338,8 @@ export class FiniteLoops extends LitElement {
     }
 
     .panorama-bg img {
-      width: auto;
-      height: 100%;
+      width: 100%;
+      height: auto;
       display: block;
     }
 
@@ -441,7 +440,6 @@ export class FiniteLoops extends LitElement {
 
   render() {
     const active = this._activeRegion;
-    const panoramaWidth = `${this.regions.length * 100}vw`;
     const panoramaScale = this.isDetailOpen ? 1.02 : 1;
     const percent = (this.activeRegionIndex / (this.regions.length - 1)) * 100;
 
@@ -465,7 +463,6 @@ export class FiniteLoops extends LitElement {
             <div
               class="panorama-bg"
               style=${`
-                      width: ${panoramaWidth};
                       transform-origin: ${percent}% center;
                       transform: scale(${panoramaScale});
                     `}
