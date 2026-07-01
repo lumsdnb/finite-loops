@@ -1,12 +1,10 @@
 import { LitElement, html, css } from "lit";
-import { customElement, property, state, query } from "lit/decorators.js";
+import { customElement, property, query } from "lit/decorators.js";
 
 @customElement("top-nav")
 export class TopNav extends LitElement {
   @property({ type: String }) activeName = "";
   @property({ type: Array }) regions: { id: string; name: string }[] = [];
-
-  @state() private translateX = 0;
 
   @query(".nav-container") private navContainer!: HTMLElement;
   @query(".nav-links") private navLinks!: HTMLElement;
@@ -38,7 +36,8 @@ export class TopNav extends LitElement {
       flex: 1;
       display: flex;
       justify-content: flex-end;
-      overflow: hidden;
+      overflow-x: auto;
+      overflow-y: hidden;
       mask-image: linear-gradient(
         to right,
         transparent,
@@ -46,15 +45,18 @@ export class TopNav extends LitElement {
         black 85%,
         transparent
       );
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .nav-container::-webkit-scrollbar {
+      display: none;
     }
 
     .nav-links {
       display: flex;
       gap: 1.2rem;
       padding: 0 1rem;
-      transition: transform var(--lums-transition-lg)
-        cubic-bezier(0.33, 1, 0.68, 1);
-      will-change: transform;
     }
 
     button {
@@ -95,6 +97,13 @@ export class TopNav extends LitElement {
     @container nav-wrapper (max-width: 600px) {
       .nav-container {
         justify-content: flex-start;
+        mask-image: linear-gradient(
+          to right,
+          transparent,
+          black 6%,
+          black 94%,
+          transparent
+        );
       }
 
       button:not(.active) {
@@ -105,18 +114,17 @@ export class TopNav extends LitElement {
   `;
 
   protected firstUpdated() {
-    this._recomputeOffset();
+    requestAnimationFrame(() => this._scrollToActive("instant"));
 
-    const ro = new ResizeObserver(() => this._recomputeOffset());
+    const ro = new ResizeObserver(() => this._scrollToActive("smooth"));
     ro.observe(this.navContainer);
-    ro.observe(this.navLinks);
 
     this._resizeObserver = ro;
   }
 
   protected updated(changed: Map<string, unknown>) {
     if (changed.has("activeName") || changed.has("regions")) {
-      this._recomputeOffset();
+      this._scrollToActive("smooth");
     }
   }
 
@@ -139,10 +147,7 @@ export class TopNav extends LitElement {
         </div>
 
         <div class="nav-container">
-          <nav
-            class="nav-links"
-            style="transform: translateX(${this.translateX}px)"
-          >
+          <nav class="nav-links">
             ${this.regions.map(
               (region, idx) => html`
                 <button
@@ -159,37 +164,31 @@ export class TopNav extends LitElement {
     `;
   }
 
-  private _recomputeOffset() {
-    if (!this.navContainer || !this.navLinks) return;
+  private _scrollToActive(behavior: ScrollBehavior) {
+    if (!this.navContainer) return;
 
     const activeIndex = this.regions.findIndex(
       (r) => r.name === this.activeName,
     );
 
-    if (activeIndex < 0) {
-      this.translateX = 0;
-      return;
-    }
+    if (activeIndex < 0) return;
 
-    const buttons = Array.from(this.navLinks.querySelectorAll("button"));
-    const activeButton = buttons[activeIndex] as HTMLButtonElement | undefined;
+    const buttons = Array.from(
+      this.navLinks.querySelectorAll("button"),
+    ) as HTMLButtonElement[];
+    const activeButton = buttons[activeIndex];
 
-    if (!activeButton) {
-      this.translateX = 0;
-      return;
-    }
+    if (!activeButton) return;
 
-    const containerWidth = this.navContainer.clientWidth;
-    const navWidth = this.navLinks.scrollWidth;
+    const containerRect = this.navContainer.getBoundingClientRect();
+    const buttonRect = activeButton.getBoundingClientRect();
+    const currentScroll = this.navContainer.scrollLeft;
 
-    const buttonCenter = activeButton.offsetLeft + activeButton.offsetWidth / 2;
+    const buttonCenter =
+      buttonRect.left - containerRect.left + buttonRect.width / 2 + currentScroll;
+    const scrollTarget = buttonCenter - containerRect.width / 2;
 
-    const desired = containerWidth / 2 - buttonCenter;
-
-    const minTranslate = Math.min(0, containerWidth - navWidth);
-    const maxTranslate = 0;
-
-    this.translateX = Math.max(minTranslate, Math.min(maxTranslate, desired));
+    this.navContainer.scrollTo({ left: scrollTarget, behavior });
   }
 
   private _dispatchNavigate(index: number) {

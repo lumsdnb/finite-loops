@@ -5,7 +5,6 @@ export declare class TopNav extends LitElement {
         id: string;
         name: string;
     }[];
-    private translateX;
     private navContainer;
     private navLinks;
     static styles: import("lit").CSSResult;
@@ -14,6 +13,6 @@ export declare class TopNav extends LitElement {
     private _resizeObserver?;
     disconnectedCallback(): void;
     render(): import("lit").TemplateResult<1>;
-    private _recomputeOffset;
+    private _scrollToActive;
     private _dispatchNavigate;
 }
