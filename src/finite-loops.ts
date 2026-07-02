@@ -4,11 +4,39 @@ import "./components/top-nav";
 import { releases, type Release } from "./lib/releases";
 import { artists } from "./lib/artists";
 import { posts } from "./lib/blog";
+import fntlps1Img from "./lib/assets/fntlps1.jpg";
+import fntlps2Img from "./lib/assets/fntlps2.jpg";
+import fntlps3Img from "./lib/assets/fntlps3.jpg";
+
+const coverImages: Record<string, string> = {
+	fntlps1: fntlps1Img,
+	fntlps2: fntlps2Img,
+	fntlps3: fntlps3Img,
+};
 
 interface Region {
 	id: string;
 	name: string;
 	desc: string;
+}
+
+interface IcecastSource {
+	server_name: string;
+	server_description: string;
+	content_type: string;
+	listeners: number;
+	listener_peak: number;
+	genre: string;
+	title?: string;
+	listenurl: string;
+}
+
+interface IcecastStatus {
+	admin: string;
+	host: string;
+	server_id: string;
+	server_start_iso8601: string;
+	source?: IcecastSource | IcecastSource[];
 }
 
 const NAV_KEYS = new Set(["Space", "ArrowLeft", "ArrowRight", "KeyA", "KeyD"]);
@@ -18,10 +46,14 @@ export class FiniteLoops extends LitElement {
 	@state() private activeRegionIndex = 0;
 	@state() private isDetailOpen = false;
 	@state() private _selectedRelease: Release | null = null;
+	@state() private _icecastData: IcecastStatus | null = null;
+	@state() private _radioPlaying = false;
 
 	@query(".world-viewport") private _viewport!: HTMLElement;
 
 	private _isNavigating = false;
+	private _radioAudio: HTMLAudioElement | null = null;
+	private _pollTimer: number | undefined;
 
 	private readonly regions: Region[] = [
 		{
@@ -33,6 +65,11 @@ export class FiniteLoops extends LitElement {
 			id: "record-shop",
 			name: "Record Shop",
 			desc: "A small corner alley placeholder.",
+		},
+		{
+			id: "broadcast",
+			name: "Broadcast",
+			desc: "Finite Loops Radio. Live streams and broadcasts from the collective.",
 		},
 		{
 			id: "ancient-relic",
@@ -62,6 +99,12 @@ export class FiniteLoops extends LitElement {
 
 		document.addEventListener("selectstart", this._preventSelection);
 		document.addEventListener("dragstart", this._preventSelection);
+
+		this._fetchIcecastStatus();
+		this._pollTimer = window.setInterval(
+			() => this._fetchIcecastStatus(),
+			30_000,
+		);
 	}
 	disconnectedCallback() {
 		super.disconnectedCallback();
@@ -74,6 +117,9 @@ export class FiniteLoops extends LitElement {
 		window.removeEventListener("popstate", this._hydrateFromHash);
 		this.removeEventListener("wheel", this._handleWheel);
 		this._viewport?.removeEventListener("pointerdown", this._cancelNavigating);
+
+		window.clearInterval(this._pollTimer);
+		this._stopRadio();
 	}
 
 	private _preventSelection = (event: Event) => {
@@ -221,6 +267,55 @@ export class FiniteLoops extends LitElement {
 		});
 	};
 
+	private async _fetchIcecastStatus() {
+		try {
+			const res = await fetch(
+				"https://radio.finiteloops.net/status-json.xsl",
+			);
+			const json = await res.json();
+			this._icecastData = json.icestats as IcecastStatus;
+		} catch {
+			// keep previous data on failure
+		}
+	}
+
+	private _toggleRadio(url: string) {
+		if (this._radioAudio) {
+			this._stopRadio();
+			return;
+		}
+
+		const audio = new Audio(url);
+		audio.crossOrigin = "anonymous";
+		audio.play().catch(() => this._stopRadio());
+		this._radioAudio = audio;
+		this._radioPlaying = true;
+	}
+
+	private _stopRadio() {
+		if (this._radioAudio) {
+			this._radioAudio.pause();
+			this._radioAudio.src = "";
+			this._radioAudio = null;
+		}
+		this._radioPlaying = false;
+	}
+
+	private _formatUptime(iso: string): string {
+		const diff = Date.now() - new Date(iso).getTime();
+		const hours = Math.floor(diff / 3_600_000);
+		const mins = Math.floor((diff % 3_600_000) / 60_000);
+		if (hours > 0) return `${hours}h ${mins}m`;
+		return `${mins}m`;
+	}
+
+	private _getSources(): IcecastSource[] {
+		if (!this._icecastData?.source) return [];
+		return Array.isArray(this._icecastData.source)
+			? this._icecastData.source
+			: [this._icecastData.source];
+	}
+
 	private _renderRegionScene(id: string) {
 		switch (id) {
 			case "city":
@@ -263,6 +358,53 @@ export class FiniteLoops extends LitElement {
 							fill="#222" />
 					</g>
 				`;
+
+			case "broadcast": {
+				const isLive = this._getSources().length > 0;
+				return svg`
+					<line x1="0" y1="320" x2="800" y2="320"
+						stroke="#555" stroke-width="2" />
+					<g class="scene-object"
+						@click=${this._toggleDetail}>
+						<!-- station building -->
+						<rect x="320" y="240" width="160" height="80"
+							fill="#444" rx="2" />
+						<rect x="330" y="250" width="30" height="20"
+							fill="#222" rx="1" />
+						<rect x="370" y="250" width="30" height="20"
+							fill="#222" rx="1" />
+						<!-- door -->
+						<rect x="385" y="285" width="30" height="35"
+							fill="#222" rx="1" />
+						<!-- antenna mast -->
+						<line x1="400" y1="240" x2="400" y2="60"
+							stroke="#666" stroke-width="4" />
+						<!-- cross-bars -->
+						<line x1="388" y1="200" x2="412" y2="200"
+							stroke="#666" stroke-width="2" />
+						<line x1="391" y1="160" x2="409" y2="160"
+							stroke="#666" stroke-width="2" />
+						<line x1="394" y1="120" x2="406" y2="120"
+							stroke="#666" stroke-width="2" />
+						<!-- antenna tip -->
+						<polygon points="396,60 404,60 400,48"
+							fill="#888" />
+						<!-- signal arcs -->
+						<path class="signal-arc ${isLive ? 'live' : ''}"
+							d="M 416,48 A 20,20 0 0,1 416,28"
+							fill="none" stroke="#00e5ff" stroke-width="2"
+							opacity="0.6" />
+						<path class="signal-arc ${isLive ? 'live' : ''}"
+							d="M 424,52 A 32,32 0 0,1 424,20"
+							fill="none" stroke="#00e5ff" stroke-width="2"
+							opacity="0.4" />
+						<path class="signal-arc ${isLive ? 'live' : ''}"
+							d="M 432,56 A 44,44 0 0,1 432,12"
+							fill="none" stroke="#00e5ff" stroke-width="2"
+							opacity="0.2" />
+					</g>
+				`;
+			}
 
 			case "ancient-relic":
 				return svg`
@@ -455,8 +597,7 @@ export class FiniteLoops extends LitElement {
 
 		.scene-header {
 			margin-bottom: 1.25rem;
-			border-bottom: 3px solid;
-			border-image: linear-gradient(90deg, #00e5ff, #ff2d7b, #b5ff00) 1;
+			border-bottom: 3px solid #2a2a2a;
 			padding-bottom: 0.75rem;
 		}
 
@@ -511,12 +652,13 @@ export class FiniteLoops extends LitElement {
 			border-color: #00e5ff;
 		}
 
-		.release-vinyl svg {
-			width: 80px;
-			height: 80px;
+		.release-cover {
+			width: 100%;
+			aspect-ratio: 1;
+			object-fit: cover;
 		}
 
-		.release-card.selected .release-vinyl svg {
+		.release-card.selected .release-cover {
 			animation: spin 3s linear infinite;
 		}
 
@@ -791,6 +933,143 @@ export class FiniteLoops extends LitElement {
 			margin-top: 6px;
 		}
 
+		/* --- Broadcast --- */
+
+		.radio-status {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			margin-bottom: 1rem;
+			font-size: 0.8rem;
+		}
+
+		.status-dot {
+			width: 8px;
+			height: 8px;
+			border-radius: 50%;
+			background: #555;
+		}
+
+		.status-dot.live {
+			background: #0f0;
+			animation: livePulse 1.5s ease-in-out infinite;
+		}
+
+		.status-dot.offline {
+			background: #555;
+		}
+
+		@keyframes livePulse {
+			0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 0, 0.4); }
+			50% { box-shadow: 0 0 0 6px rgba(0, 255, 0, 0); }
+		}
+
+		.status-text {
+			text-transform: uppercase;
+			letter-spacing: 0.1em;
+			font-weight: 700;
+		}
+
+		.status-uptime {
+			color: #666;
+			font-size: 0.7rem;
+			margin-left: auto;
+		}
+
+		.stream-card {
+			background: #111;
+			border: 1px solid #2a2a2a;
+			padding: 14px;
+			margin-bottom: 10px;
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		.stream-card-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: baseline;
+		}
+
+		.stream-mount {
+			font-size: 0.9rem;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+		}
+
+		.stream-type {
+			font-size: 0.65rem;
+			color: #666;
+			text-transform: uppercase;
+		}
+
+		.stream-track {
+			font-size: 0.8rem;
+			color: #00e5ff;
+		}
+
+		.stream-listeners {
+			font-size: 0.75rem;
+			color: #888;
+		}
+
+		.radio-play-btn {
+			background: none;
+			border: 1px solid #00e5ff;
+			color: #00e5ff;
+			font-family: inherit;
+			font-size: 0.75rem;
+			text-transform: uppercase;
+			letter-spacing: 0.1em;
+			padding: 6px 16px;
+			cursor: pointer;
+			align-self: flex-start;
+			transition: background 0.15s, color 0.15s;
+		}
+
+		.radio-play-btn:hover {
+			background: #00e5ff;
+			color: #0a0a0a;
+		}
+
+		.stream-url {
+			font-family: 'Courier New', monospace;
+			font-size: 0.65rem;
+			color: #555;
+			word-break: break-all;
+			user-select: text;
+			-webkit-user-select: text;
+		}
+
+		.no-streams {
+			font-size: 0.8rem;
+			color: #666;
+			margin: 0;
+		}
+
+		.server-info {
+			margin-top: 1rem;
+			padding-top: 0.75rem;
+			border-top: 1px solid #2a2a2a;
+			font-size: 0.65rem;
+			color: #444;
+		}
+
+		.signal-arc {
+			opacity: 0.15;
+		}
+
+		.signal-arc.live {
+			animation: radioSignal 2s ease-in-out infinite;
+		}
+
+		@keyframes radioSignal {
+			0%, 100% { opacity: 0.1; }
+			50% { opacity: 0.7; }
+		}
+
 		/* --- Soundwall --- */
 
 		.now-playing {
@@ -1011,16 +1290,7 @@ export class FiniteLoops extends LitElement {
 									class="release-card ${this._selectedRelease?.slug === r.slug ? 'selected' : ''}"
 									@click=${() => this._selectRelease(r)}
 								>
-									<div class="release-vinyl">
-										<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-											<circle cx="50" cy="50" r="48" fill="#111" stroke="#333" stroke-width="1"/>
-											<circle cx="50" cy="50" r="36" fill="none" stroke="#222" stroke-width="0.5"/>
-											<circle cx="50" cy="50" r="28" fill="none" stroke="#222" stroke-width="0.5"/>
-											<circle cx="50" cy="50" r="20" fill="none" stroke="#222" stroke-width="0.5"/>
-											<circle cx="50" cy="50" r="14" fill="#c44" stroke="#a33" stroke-width="0.5"/>
-											<circle cx="50" cy="50" r="3" fill="#111"/>
-										</svg>
-									</div>
+									<img class="release-cover" src=${coverImages[r.slug]} alt=${r.title} />
 									<span class="release-title">${r.title}</span>
 									<span class="release-meta">${r.tracks.length} tracks</span>
 								</button>
@@ -1061,17 +1331,76 @@ export class FiniteLoops extends LitElement {
 						: nothing}
 				`;
 
+			case "broadcast": {
+				const sources = this._getSources();
+				const isLive = sources.length > 0;
+				const uptime = this._icecastData?.server_start_iso8601
+					? this._formatUptime(this._icecastData.server_start_iso8601)
+					: null;
+
+				return html`
+					<div class="scene-header">
+						<h2>Broadcast</h2>
+						<span class="scene-sub">finite loops radio</span>
+					</div>
+
+					<div class="radio-status">
+						<span class="status-dot ${isLive ? 'live' : 'offline'}"></span>
+						<span class="status-text">${isLive ? "LIVE" : "OFFLINE"}</span>
+						${uptime
+							? html`<span class="status-uptime">up ${uptime}</span>`
+							: nothing}
+					</div>
+
+					${isLive
+						? html`
+								${sources.map(
+									(s) => html`
+										<div class="stream-card">
+											<div class="stream-card-header">
+												<span class="stream-mount">${s.server_name || "stream"}</span>
+												<span class="stream-type">${s.content_type}</span>
+											</div>
+											${s.title
+												? html`<div class="stream-track">Now: ${s.title}</div>`
+												: nothing}
+											<div class="stream-listeners">
+												${s.listeners} listener${s.listeners !== 1 ? "s" : ""}
+												(peak: ${s.listener_peak})
+											</div>
+											<button
+												class="radio-play-btn"
+												@click=${() => this._toggleRadio(s.listenurl)}
+											>
+												${this._radioPlaying ? "STOP" : "PLAY"}
+											</button>
+											<div class="stream-url">${s.listenurl}</div>
+										</div>
+									`,
+								)}
+							`
+						: html`
+								<div class="stream-card">
+									<p class="no-streams">No active streams</p>
+								</div>
+							`}
+
+					${this._icecastData
+						? html`
+								<div class="server-info">
+									<span>${this._icecastData.server_id}</span>
+								</div>
+							`
+						: nothing}
+				`;
+			}
+
 			case "city":
 				return html`
 					<div class="scene-header">
 						<h2>The Overpass</h2>
 						<span class="scene-sub">where the high-rises meet the highway bridge</span>
 					</div>
-					<p class="scene-body">
-						finite loops is a music collective built around improvisation,
-						collaboration, and letting the loops run until they find their
-						own shape.
-					</p>
 					<div class="member-grid">
 						${artists.map(
 							(a) => html`
@@ -1169,11 +1498,6 @@ export class FiniteLoops extends LitElement {
 					<div class="eq-bars" aria-hidden="true">
 						${Array.from({ length: 16 }, (_, i) => html`<div class="eq-bar" style="--i:${i}"></div>`)}
 					</div>
-					<p class="scene-body">
-						the soundwall is where the collective meets the crowd.
-						live sessions, shared frequencies, and bass you can feel
-						in your chest.
-					</p>
 				`;
 
 			default:
