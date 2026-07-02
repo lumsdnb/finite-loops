@@ -18,6 +18,8 @@ export class FiniteLoops extends LitElement {
 
   @query(".world-viewport") private _viewport!: HTMLElement;
 
+  private _isNavigating = false;
+
   private readonly worldSvg = "/regions/full-world-desktop.svg";
 
   private readonly regions: Region[] = [
@@ -75,6 +77,7 @@ export class FiniteLoops extends LitElement {
 
     window.removeEventListener("popstate", this._hydrateFromHash);
     this.removeEventListener("wheel", this._handleWheel);
+    this._viewport?.removeEventListener("pointerdown", this._cancelNavigating);
   }
 
   private _preventSelection = (event: Event) => {
@@ -83,6 +86,7 @@ export class FiniteLoops extends LitElement {
 
   firstUpdated() {
     this.addEventListener("wheel", this._handleWheel, { passive: false });
+    this._viewport.addEventListener("pointerdown", this._cancelNavigating);
     this._hydrateFromHash();
     window.addEventListener("popstate", this._hydrateFromHash);
   }
@@ -118,6 +122,7 @@ export class FiniteLoops extends LitElement {
   ) {
     if (!this._viewport) return;
 
+    this._isNavigating = true;
     const width = this._viewport.offsetWidth;
 
     this._viewport.scrollTo({
@@ -159,10 +164,15 @@ export class FiniteLoops extends LitElement {
     }
   };
 
+  private _cancelNavigating = () => {
+    this._isNavigating = false;
+  };
+
   private _handleWheel = (event: WheelEvent) => {
     if (!this._viewport) return;
 
     event.preventDefault();
+    this._isNavigating = false;
 
     this._viewport.scrollBy({
       left: event.deltaY,
@@ -177,6 +187,13 @@ export class FiniteLoops extends LitElement {
     const nextIndex = this._clampRegionIndex(
       Math.round(this._viewport.scrollLeft / width),
     );
+
+    if (this._isNavigating) {
+      if (nextIndex === this.activeRegionIndex) {
+        this._isNavigating = false;
+      }
+      return;
+    }
 
     if (nextIndex === this.activeRegionIndex) return;
 
