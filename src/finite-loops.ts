@@ -434,17 +434,18 @@ export class FiniteLoops extends LitElement {
 			scroll-snap-align: start;
 			scroll-snap-stop: always;
 			display: flex;
-			align-items: center;
-			justify-content: center;
 			cursor: pointer;
 		}
 
 		.region-scene {
 			width: 100%;
 			height: 100%;
+			display: flex;
 		}
 
 		.region-scene svg {
+			width: 100%;
+			height: 100%;
 			pointer-events: none;
 		}
 
