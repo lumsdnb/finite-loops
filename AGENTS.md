@@ -1,5 +1,7 @@
 # Finite Loops
 
+> **Note:** `CLAUDE.md` is a symlink to `AGENTS.md` — always edit `AGENTS.md` directly.
+
 Music collective platform combining an SP-404-inspired beat machine with an interactive world navigator. Built with Lit web components, TypeScript, and Vite.
 
 ## Tech Stack
