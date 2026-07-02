@@ -1,6 +1,8 @@
 import { LitElement, html, css, svg, nothing } from "lit";
 import { customElement, state, query } from "lit/decorators.js";
 import "./components/top-nav";
+import "./components/audio-player";
+import { getAudioBus, type AudioTrack } from "./audio/audio-bus";
 import { releases, type Release } from "./lib/releases";
 import { artists } from "./lib/artists";
 import { posts } from "./lib/blog";
@@ -47,12 +49,14 @@ export class FiniteLoops extends LitElement {
 	@state() private isDetailOpen = false;
 	@state() private _selectedRelease: Release | null = null;
 	@state() private _icecastData: IcecastStatus | null = null;
-	@state() private _radioPlaying = false;
+	@state() private _audioPlaying = false;
+	@state() private _audioTrack: AudioTrack | null = null;
+	@state() private _isPlayerOpen = false;
 
 	@query(".world-viewport") private _viewport!: HTMLElement;
 
 	private _isNavigating = false;
-	private _radioAudio: HTMLAudioElement | null = null;
+	private _audioBus = getAudioBus();
 	private _pollTimer: number | undefined;
 
 	private readonly regions: Region[] = [
@@ -100,6 +104,8 @@ export class FiniteLoops extends LitElement {
 		document.addEventListener("selectstart", this._preventSelection);
 		document.addEventListener("dragstart", this._preventSelection);
 
+		this._audioBus.addEventListener("change", this._onAudioChange);
+
 		this._fetchIcecastStatus();
 		this._pollTimer = window.setInterval(
 			() => this._fetchIcecastStatus(),
@@ -118,8 +124,9 @@ export class FiniteLoops extends LitElement {
 		this.removeEventListener("wheel", this._handleWheel);
 		this._viewport?.removeEventListener("pointerdown", this._cancelNavigating);
 
+		this._audioBus.removeEventListener("change", this._onAudioChange);
 		window.clearInterval(this._pollTimer);
-		this._stopRadio();
+		this._audioBus.stop();
 	}
 
 	private _preventSelection = (event: Event) => {
@@ -279,27 +286,42 @@ export class FiniteLoops extends LitElement {
 		}
 	}
 
-	private _toggleRadio(url: string) {
-		if (this._radioAudio) {
-			this._stopRadio();
+	private _toggleRadio(url: string, title: string) {
+		if (this._audioBus.playing && this._audioBus.track?.url === url) {
+			this._audioBus.stop();
 			return;
 		}
 
-		const audio = new Audio(url);
-		audio.crossOrigin = "anonymous";
-		audio.play().catch(() => this._stopRadio());
-		this._radioAudio = audio;
-		this._radioPlaying = true;
+		this._audioBus.play({
+			id: 'radio',
+			title,
+			source: 'Radio',
+			url,
+			isStream: true,
+		});
 	}
 
-	private _stopRadio() {
-		if (this._radioAudio) {
-			this._radioAudio.pause();
-			this._radioAudio.src = "";
-			this._radioAudio = null;
+	private _onAudioChange = () => {
+		this._audioPlaying = this._audioBus.playing;
+		this._audioTrack = this._audioBus.track;
+		if (!this._audioBus.playing) {
+			this._isPlayerOpen = false;
 		}
-		this._radioPlaying = false;
-	}
+	};
+
+	private _handleLogoClick = () => {
+		if (this._audioPlaying) {
+			this._isPlayerOpen = !this._isPlayerOpen;
+		}
+	};
+
+	private _handleTogglePlayback = () => {
+		this._audioBus.togglePause();
+	};
+
+	private _handleStopPlayback = () => {
+		this._audioBus.stop();
+	};
 
 	private _formatUptime(iso: string): string {
 		const diff = Date.now() - new Date(iso).getTime();
@@ -1222,8 +1244,19 @@ export class FiniteLoops extends LitElement {
 				<top-nav
 					.activeName=${active.name}
 					.regions=${this.regions}
+					.audioPlaying=${this._audioPlaying}
 					@navigate-to=${this._handleNavRequest}
+					@logo-click=${this._handleLogoClick}
 				></top-nav>
+
+				<audio-player
+					.open=${this._isPlayerOpen}
+					.trackTitle=${this._audioTrack?.title ?? ''}
+					.trackSource=${this._audioTrack?.source ?? ''}
+					.playing=${this._audioPlaying}
+					@toggle-playback=${this._handleTogglePlayback}
+					@stop-playback=${this._handleStopPlayback}
+				></audio-player>
 
 				<div class="detail-region ${this.isDetailOpen ? 'open' : ''}" @click=${this._toggleDetail}>
 					<div class="detail-card ${this.isDetailOpen ? 'active' : ''}" @click=${(e: Event) => e.stopPropagation()}>
@@ -1362,9 +1395,9 @@ export class FiniteLoops extends LitElement {
 											</div>
 											<button
 												class="radio-play-btn"
-												@click=${() => this._toggleRadio(s.listenurl)}
+												@click=${() => this._toggleRadio(s.listenurl, s.server_name || 'stream')}
 											>
-												${this._radioPlaying ? "STOP" : "PLAY"}
+												${this._audioTrack?.url === s.listenurl ? 'STOP' : 'PLAY'}
 											</button>
 											<div class="stream-url">${s.listenurl}</div>
 										</div>

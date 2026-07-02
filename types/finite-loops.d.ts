@@ -1,14 +1,17 @@
 import { LitElement } from "lit";
 import "./components/top-nav";
+import "./components/audio-player";
 export declare class FiniteLoops extends LitElement {
     private activeRegionIndex;
     private isDetailOpen;
     private _selectedRelease;
     private _icecastData;
-    private _radioPlaying;
+    private _audioPlaying;
+    private _audioTrack;
+    private _isPlayerOpen;
     private _viewport;
     private _isNavigating;
-    private _radioAudio;
+    private _audioBus;
     private _pollTimer;
     private readonly regions;
     private get _activeRegion();
@@ -31,7 +34,10 @@ export declare class FiniteLoops extends LitElement {
     private _hydrateFromHash;
     private _fetchIcecastStatus;
     private _toggleRadio;
-    private _stopRadio;
+    private _onAudioChange;
+    private _handleLogoClick;
+    private _handleTogglePlayback;
+    private _handleStopPlayback;
     private _formatUptime;
     private _getSources;
     private _renderRegionScene;

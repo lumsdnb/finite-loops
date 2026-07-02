@@ -5,6 +5,7 @@ import { customElement, property, query } from "lit/decorators.js";
 export class TopNav extends LitElement {
   @property({ type: String }) activeName = "";
   @property({ type: Array }) regions: { id: string; name: string }[] = [];
+  @property({ type: Boolean }) audioPlaying = false;
 
   @query(".nav-container") private navContainer!: HTMLElement;
   @query(".nav-links") private navLinks!: HTMLElement;
@@ -94,6 +95,15 @@ export class TopNav extends LitElement {
       display: block;
     }
 
+    .logo img.spinning {
+      animation: spin 2s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
     @container nav-wrapper (max-width: 600px) {
       .nav-container {
         justify-content: flex-start;
@@ -138,8 +148,8 @@ export class TopNav extends LitElement {
   render() {
     return html`
       <div class="nav-bar">
-        <div class="logo">
-          <img src="/favicon.svg" alt="Logo" />
+        <div class="logo" @click=${this._handleLogoClick}>
+          <img src="/favicon.svg" alt="Logo" class=${this.audioPlaying ? 'spinning' : ''} />
           <div>
             FINITE <br />
             LOOPS
@@ -163,6 +173,12 @@ export class TopNav extends LitElement {
       </div>
     `;
   }
+
+  private _handleLogoClick = () => {
+    this.dispatchEvent(
+      new CustomEvent("logo-click", { bubbles: true, composed: true }),
+    );
+  };
 
   private _scrollToActive(behavior: ScrollBehavior) {
     if (!this.navContainer) return;
