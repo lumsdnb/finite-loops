@@ -1,6 +1,9 @@
 import { LitElement, html, css, svg, nothing } from "lit";
 import { customElement, state, query } from "lit/decorators.js";
 import "./components/top-nav";
+import { releases, type Release } from "./lib/releases";
+import { artists } from "./lib/artists";
+import { posts } from "./lib/blog";
 
 interface Region {
 	id: string;
@@ -14,6 +17,7 @@ const NAV_KEYS = new Set(["Space", "ArrowLeft", "ArrowRight", "KeyA", "KeyD"]);
 export class FiniteLoops extends LitElement {
 	@state() private activeRegionIndex = 0;
 	@state() private isDetailOpen = false;
+	@state() private _selectedRelease: Release | null = null;
 
 	@query(".world-viewport") private _viewport!: HTMLElement;
 
@@ -200,6 +204,7 @@ export class FiniteLoops extends LitElement {
 
 	private _toggleDetail = () => {
 		this.isDetailOpen = !this.isDetailOpen;
+		if (!this.isDetailOpen) this._selectedRelease = null;
 	};
 
 	private _hydrateFromHash = () => {
@@ -379,34 +384,462 @@ export class FiniteLoops extends LitElement {
 
 		.detail-region {
 			position: absolute;
+			inset: 0;
 			top: var(--lums-top-nav-height);
-			padding: 1rem;
-			width: 100%;
 			z-index: 10;
 			pointer-events: none;
 			display: flex;
-			align-items: center;
+			align-items: flex-start;
 			justify-content: center;
+			padding: 1rem;
+			background: rgba(0, 0, 0, 0);
+			transition: background 0.3s ease;
+		}
+
+		.detail-region.open {
+			pointer-events: auto;
+			background: rgba(0, 0, 0, 0.5);
 		}
 
 		.detail-card {
-			background: white;
-			padding: 2rem;
-			border-radius: 2px;
-			box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-			width: 60vw;
-			max-width: 400px;
-			height: 40vh;
+			background: #0a0a0a;
+			border: 2px solid #2a2a2a;
+			padding: 0;
+			width: 90vw;
+			max-width: 600px;
+			max-height: 75vh;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
 			transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 			transform: translateY(30px) scale(0.95);
 			opacity: 0;
 			pointer-events: none;
+			position: relative;
+			font-family: 'Courier New', monospace;
+			color: #e0e0e0;
 		}
 
 		.detail-card.active {
 			transform: translateY(0) scale(1);
 			opacity: 1;
 			pointer-events: auto;
+		}
+
+		.detail-close {
+			position: absolute;
+			top: 8px;
+			right: 12px;
+			background: none;
+			border: none;
+			color: #888;
+			font-size: 1.5rem;
+			cursor: pointer;
+			z-index: 2;
+			line-height: 1;
+			font-family: inherit;
+		}
+
+		.detail-close:hover {
+			color: #00e5ff;
+		}
+
+		.detail-content {
+			overflow-y: auto;
+			padding: 1.5rem;
+			scrollbar-width: thin;
+			scrollbar-color: #333 transparent;
+		}
+
+		/* --- Scene shared --- */
+
+		.scene-header {
+			margin-bottom: 1.25rem;
+			border-bottom: 3px solid;
+			border-image: linear-gradient(90deg, #00e5ff, #ff2d7b, #b5ff00) 1;
+			padding-bottom: 0.75rem;
+		}
+
+		.scene-header h2 {
+			font-size: 1.4rem;
+			text-transform: uppercase;
+			letter-spacing: 0.1em;
+			margin: 0;
+			font-family: inherit;
+			font-weight: 700;
+		}
+
+		.scene-sub {
+			font-size: 0.75rem;
+			color: #888;
+			text-transform: uppercase;
+			letter-spacing: 0.06em;
+		}
+
+		.scene-body {
+			font-size: 0.85rem;
+			color: #aaa;
+			line-height: 1.6;
+			margin: 1rem 0;
+		}
+
+		/* --- Record Shop --- */
+
+		.release-grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 12px;
+			margin-bottom: 1rem;
+		}
+
+		.release-card {
+			background: #111;
+			border: 1px solid #2a2a2a;
+			padding: 10px;
+			cursor: pointer;
+			text-align: center;
+			transition: border-color 0.15s;
+			font-family: inherit;
+			color: inherit;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.release-card:hover, .release-card.selected {
+			border-color: #00e5ff;
+		}
+
+		.release-vinyl svg {
+			width: 80px;
+			height: 80px;
+		}
+
+		.release-card.selected .release-vinyl svg {
+			animation: spin 3s linear infinite;
+		}
+
+		@keyframes spin {
+			to { transform: rotate(360deg); }
+		}
+
+		.release-title {
+			font-size: 0.8rem;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+		}
+
+		.release-meta {
+			font-size: 0.7rem;
+			color: #666;
+		}
+
+		.release-detail {
+			background: #111;
+			border: 1px solid #2a2a2a;
+			padding: 1rem;
+			margin-top: 0.5rem;
+		}
+
+		.detail-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: baseline;
+			margin-bottom: 0.75rem;
+		}
+
+		.detail-header h3 {
+			font-size: 1rem;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			margin: 0;
+			font-family: inherit;
+			font-weight: 700;
+		}
+
+		.release-date {
+			font-size: 0.7rem;
+			color: #666;
+		}
+
+		.track-list {
+			margin-bottom: 0.75rem;
+		}
+
+		.track-row {
+			display: flex;
+			gap: 10px;
+			padding: 4px 0;
+			font-size: 0.8rem;
+			border-bottom: 1px solid #1a1a1a;
+		}
+
+		.track-num {
+			color: #555;
+			min-width: 20px;
+		}
+
+		.track-name {
+			flex: 1;
+		}
+
+		.track-dur {
+			color: #666;
+		}
+
+		.release-contributors {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 6px;
+			margin-bottom: 0.75rem;
+		}
+
+		.contrib-tag {
+			font-size: 0.65rem;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			padding: 2px 6px;
+			border: 1px solid #00e5ff;
+			color: #00e5ff;
+		}
+
+		.bandcamp-link {
+			display: inline-block;
+			font-size: 0.75rem;
+			text-transform: uppercase;
+			letter-spacing: 0.06em;
+			color: #00e5ff;
+			text-decoration: none;
+			border-bottom: 1px solid currentColor;
+		}
+
+		.bandcamp-link:hover {
+			color: #b5ff00;
+		}
+
+		/* --- Overpass (City) --- */
+
+		.member-grid {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 10px;
+			margin: 1rem 0;
+		}
+
+		.member-card {
+			background: #111;
+			border: 1px solid #2a2a2a;
+			padding: 12px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 4px;
+		}
+
+		.member-initial {
+			width: 36px;
+			height: 36px;
+			border-radius: 50%;
+			background: #1a1a1a;
+			border: 1px solid #00e5ff;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 0.9rem;
+			font-weight: 700;
+			color: #00e5ff;
+		}
+
+		.member-name {
+			font-size: 0.8rem;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			font-weight: 700;
+		}
+
+		.member-meta {
+			font-size: 0.65rem;
+			color: #666;
+		}
+
+		.stats-row {
+			display: flex;
+			justify-content: space-around;
+			margin-top: 1rem;
+			padding-top: 1rem;
+			border-top: 1px solid #2a2a2a;
+		}
+
+		.stat {
+			text-align: center;
+			display: flex;
+			flex-direction: column;
+			gap: 2px;
+		}
+
+		.stat-num {
+			font-size: 1.5rem;
+			font-weight: 700;
+			color: #00e5ff;
+		}
+
+		.stat-label {
+			font-size: 0.65rem;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: #666;
+		}
+
+		/* --- Artifacts --- */
+
+		.artifact-grid {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+		}
+
+		.artifact-card {
+			background: #111;
+			border: 1px solid #2a2a2a;
+			padding: 14px;
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+			transition: border-color 0.15s;
+		}
+
+		.artifact-card:hover {
+			border-color: #00e5ff;
+		}
+
+		.artifact-icon {
+			width: 28px;
+			height: 28px;
+			color: #00e5ff;
+		}
+
+		.artifact-icon svg {
+			width: 100%;
+			height: 100%;
+		}
+
+		.artifact-card h4 {
+			font-size: 0.9rem;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			margin: 0;
+			font-family: inherit;
+			font-weight: 700;
+		}
+
+		.artifact-card p {
+			font-size: 0.75rem;
+			color: #888;
+			margin: 0;
+			line-height: 1.5;
+		}
+
+		/* --- Board --- */
+
+		.post-stack {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+		}
+
+		.post-card {
+			background: #111;
+			border: 1px solid #2a2a2a;
+			padding: 14px;
+			border-left: 3px solid #ff2d7b;
+			transition: border-color 0.15s;
+		}
+
+		.post-card:hover {
+			border-color: #00e5ff;
+			border-left-color: #00e5ff;
+		}
+
+		.post-date {
+			font-size: 0.65rem;
+			color: #555;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+		}
+
+		.post-title {
+			font-size: 0.9rem;
+			font-weight: 700;
+			text-transform: uppercase;
+			margin: 4px 0;
+			font-family: inherit;
+		}
+
+		.post-excerpt {
+			font-size: 0.75rem;
+			color: #888;
+			margin: 0;
+			line-height: 1.5;
+		}
+
+		.post-author {
+			display: block;
+			font-size: 0.65rem;
+			color: #555;
+			margin-top: 6px;
+		}
+
+		/* --- Soundwall --- */
+
+		.now-playing {
+			background: #111;
+			border: 1px solid #2a2a2a;
+			padding: 14px;
+			margin-bottom: 1rem;
+		}
+
+		.np-label {
+			font-size: 0.65rem;
+			text-transform: uppercase;
+			letter-spacing: 0.1em;
+			color: #b5ff00;
+		}
+
+		.np-release h3 {
+			font-size: 1.1rem;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			margin: 4px 0 2px;
+			font-family: inherit;
+			font-weight: 700;
+		}
+
+		.np-meta {
+			font-size: 0.7rem;
+			color: #666;
+		}
+
+		.eq-bars {
+			display: flex;
+			align-items: flex-end;
+			gap: 3px;
+			height: 40px;
+			margin-bottom: 1rem;
+		}
+
+		.eq-bar {
+			flex: 1;
+			background: #00e5ff;
+			animation: eqBounce 0.8s ease-in-out infinite alternate;
+			animation-delay: calc(var(--i) * 0.05s);
+			min-height: 4px;
+		}
+
+		@keyframes eqBounce {
+			0% { height: 15%; opacity: 0.4; }
+			100% { height: 100%; opacity: 1; }
 		}
 
 		.world-viewport {
@@ -448,6 +881,7 @@ export class FiniteLoops extends LitElement {
 
 		.region-scene.zoomed {
 			transform: scale(1.05);
+			transform-origin: center 80%;
 		}
 
 		.region-scene svg {
@@ -519,10 +953,12 @@ export class FiniteLoops extends LitElement {
 					@navigate-to=${this._handleNavRequest}
 				></top-nav>
 
-				<div class="detail-region">
-					<div class="detail-card ${this.isDetailOpen ? "active" : ""}">
-						<h2>${active.name}</h2>
-						<p>${active.desc}</p>
+				<div class="detail-region ${this.isDetailOpen ? 'open' : ''}" @click=${this._toggleDetail}>
+					<div class="detail-card ${this.isDetailOpen ? 'active' : ''}" @click=${(e: Event) => e.stopPropagation()}>
+						<button class="detail-close" @click=${this._toggleDetail}>&times;</button>
+						<div class="detail-content">
+							${this._renderDetailContent(active.id)}
+						</div>
 					</div>
 				</div>
 
@@ -554,6 +990,195 @@ export class FiniteLoops extends LitElement {
 				</div>
 			</div>
 		`;
+	}
+
+	private _selectRelease(r: Release) {
+		this._selectedRelease = this._selectedRelease?.slug === r.slug ? null : r;
+	}
+
+	private _renderDetailContent(id: string) {
+		switch (id) {
+			case "record-shop":
+				return html`
+					<div class="scene-header">
+						<h2>Record Shop</h2>
+						<span class="scene-sub">dig through the crates</span>
+					</div>
+					<div class="release-grid">
+						${releases.map(
+							(r) => html`
+								<button
+									class="release-card ${this._selectedRelease?.slug === r.slug ? 'selected' : ''}"
+									@click=${() => this._selectRelease(r)}
+								>
+									<div class="release-vinyl">
+										<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+											<circle cx="50" cy="50" r="48" fill="#111" stroke="#333" stroke-width="1"/>
+											<circle cx="50" cy="50" r="36" fill="none" stroke="#222" stroke-width="0.5"/>
+											<circle cx="50" cy="50" r="28" fill="none" stroke="#222" stroke-width="0.5"/>
+											<circle cx="50" cy="50" r="20" fill="none" stroke="#222" stroke-width="0.5"/>
+											<circle cx="50" cy="50" r="14" fill="#c44" stroke="#a33" stroke-width="0.5"/>
+											<circle cx="50" cy="50" r="3" fill="#111"/>
+										</svg>
+									</div>
+									<span class="release-title">${r.title}</span>
+									<span class="release-meta">${r.tracks.length} tracks</span>
+								</button>
+							`,
+						)}
+					</div>
+					${this._selectedRelease
+						? html`
+								<div class="release-detail">
+									<div class="detail-header">
+										<h3>${this._selectedRelease.title}</h3>
+										<span class="release-date">${this._selectedRelease.release_date}</span>
+									</div>
+									<div class="track-list">
+										${this._selectedRelease.tracks.map(
+											(t, i) => html`
+												<div class="track-row">
+													<span class="track-num">${String(i + 1).padStart(2, "0")}</span>
+													<span class="track-name">${t.title}</span>
+													<span class="track-dur">${t.duration}</span>
+												</div>
+											`,
+										)}
+									</div>
+									<div class="release-contributors">
+										${this._selectedRelease.contributors.map(
+											(c) => html`<span class="contrib-tag">${c}</span>`,
+										)}
+									</div>
+									<a
+										class="bandcamp-link"
+										href=${this._selectedRelease.bandcampUrl}
+										target="_blank"
+										rel="noopener"
+									>listen on bandcamp</a>
+								</div>
+							`
+						: nothing}
+				`;
+
+			case "city":
+				return html`
+					<div class="scene-header">
+						<h2>The Overpass</h2>
+						<span class="scene-sub">where the high-rises meet the highway bridge</span>
+					</div>
+					<p class="scene-body">
+						finite loops is a music collective built around improvisation,
+						collaboration, and letting the loops run until they find their
+						own shape.
+					</p>
+					<div class="member-grid">
+						${artists.map(
+							(a) => html`
+								<div class="member-card">
+									<span class="member-initial">${a.name[0].toUpperCase()}</span>
+									<span class="member-name">${a.name}</span>
+									<span class="member-meta">${a.releases.length} releases</span>
+								</div>
+							`,
+						)}
+					</div>
+					<div class="stats-row">
+						<div class="stat"><span class="stat-num">${releases.length}</span><span class="stat-label">releases</span></div>
+						<div class="stat"><span class="stat-num">${artists.length}</span><span class="stat-label">members</span></div>
+						<div class="stat"><span class="stat-num">${releases.reduce((n, r) => n + r.tracks.length, 0)}</span><span class="stat-label">tracks</span></div>
+					</div>
+				`;
+
+			case "ancient-relic":
+				return html`
+					<div class="scene-header">
+						<h2>Artifacts</h2>
+						<span class="scene-sub">tools from the workshop</span>
+					</div>
+					<div class="artifact-grid">
+						<div class="artifact-card">
+							<div class="artifact-icon">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+									<rect x="3" y="3" width="18" height="18" rx="2"/>
+									<rect x="6" y="6" width="5" height="5"/>
+									<rect x="13" y="6" width="5" height="5"/>
+									<rect x="6" y="13" width="5" height="5"/>
+									<rect x="13" y="13" width="5" height="5"/>
+								</svg>
+							</div>
+							<h4>SP-404</h4>
+							<p>16-pad beat machine. keyboard + MIDI input. load samples, sequence patterns, perform live.</p>
+						</div>
+						<div class="artifact-card">
+							<div class="artifact-icon">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+									<path d="M9 18V5l12-2v13"/>
+									<circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+								</svg>
+							</div>
+							<h4>Stems</h4>
+							<p>split any track into isolated stems. vocals, drums, bass, other. drag and drop.</p>
+						</div>
+						<div class="artifact-card">
+							<div class="artifact-icon">
+								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+									<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+									<path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/>
+								</svg>
+							</div>
+							<h4>Sample Library</h4>
+							<p>curated drum kits and one-shots. zildjian, sabian, paiste, vintage customs.</p>
+						</div>
+					</div>
+				`;
+
+			case "board":
+				return html`
+					<div class="scene-header">
+						<h2>The Board</h2>
+						<span class="scene-sub">community news & dispatches</span>
+					</div>
+					<div class="post-stack">
+						${posts.map(
+							(p) => html`
+								<div class="post-card">
+									<span class="post-date">${p.date}</span>
+									<h4 class="post-title">${p.title}</h4>
+									<p class="post-excerpt">${p.excerpt}</p>
+									<span class="post-author">-- ${p.author}</span>
+								</div>
+							`,
+						)}
+					</div>
+				`;
+
+			case "soundsystem":
+				return html`
+					<div class="scene-header">
+						<h2>The Soundwall</h2>
+						<span class="scene-sub">live audio & collective frequency</span>
+					</div>
+					<div class="now-playing">
+						<span class="np-label">latest drop</span>
+						<div class="np-release">
+							<h3>${releases[0].title}</h3>
+							<span class="np-meta">${releases[0].tracks.length} tracks // ${releases[0].release_date}</span>
+						</div>
+					</div>
+					<div class="eq-bars" aria-hidden="true">
+						${Array.from({ length: 16 }, (_, i) => html`<div class="eq-bar" style="--i:${i}"></div>`)}
+					</div>
+					<p class="scene-body">
+						the soundwall is where the collective meets the crowd.
+						live sessions, shared frequencies, and bass you can feel
+						in your chest.
+					</p>
+				`;
+
+			default:
+				return html`<p>${this._activeRegion.desc}</p>`;
+		}
 	}
 
 	private _caretSvg(flipped = false) {
