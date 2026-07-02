@@ -4,7 +4,7 @@ export declare class FiniteLoops extends LitElement {
     private activeRegionIndex;
     private isDetailOpen;
     private _viewport;
-    private get worldSvg();
+    private _isNavigating;
     private readonly regions;
     private get _activeRegion();
     connectedCallback(): void;
@@ -18,11 +18,13 @@ export declare class FiniteLoops extends LitElement {
     private _goToRegion;
     private _scrollToRegion;
     private _handleKeyDown;
+    private _cancelNavigating;
     private _handleWheel;
     private _handleScroll;
     private _handleNavRequest;
     private _toggleDetail;
     private _hydrateFromHash;
+    private _renderRegionScene;
     static styles: import("lit").CSSResult;
     render(): import("lit").TemplateResult<1>;
     private _caretSvg;
