@@ -59,17 +59,17 @@ export class FiniteLoops extends LitElement {
 		{
 			id: "city",
 			name: "The Overpass",
-			desc: "Where the high-rises meet the highway bridge.",
+			desc: "",
 		},
 		{
 			id: "record-shop",
 			name: "Record Shop",
-			desc: "A small corner alley placeholder.",
+			desc: "",
 		},
 		{
 			id: "broadcast",
 			name: "Broadcast",
-			desc: "Finite Loops Radio. Live streams and broadcasts from the collective.",
+			desc: "Live streams and broadcasts.",
 		},
 		{
 			id: "ancient-relic",
@@ -658,13 +658,6 @@ export class FiniteLoops extends LitElement {
 			object-fit: cover;
 		}
 
-		.release-card.selected .release-cover {
-			animation: spin 3s linear infinite;
-		}
-
-		@keyframes spin {
-			to { transform: rotate(360deg); }
-		}
 
 		.release-title {
 			font-size: 0.8rem;
@@ -1281,7 +1274,6 @@ export class FiniteLoops extends LitElement {
 				return html`
 					<div class="scene-header">
 						<h2>Record Shop</h2>
-						<span class="scene-sub">dig through the crates</span>
 					</div>
 					<div class="release-grid">
 						${releases.map(
