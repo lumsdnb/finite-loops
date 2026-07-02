@@ -441,6 +441,13 @@ export class FiniteLoops extends LitElement {
 			width: 100%;
 			height: 100%;
 			display: flex;
+			transition: transform var(--lums-transition-lg, 0.6s)
+				cubic-bezier(0.22, 1, 0.36, 1);
+			will-change: transform;
+		}
+
+		.region-scene.zoomed {
+			transform: scale(1.05);
 		}
 
 		.region-scene svg {
@@ -521,9 +528,11 @@ export class FiniteLoops extends LitElement {
 
 				<div class="world-viewport" @scroll=${this._handleScroll}>
 					${this.regions.map(
-						(region) => html`
+						(region, i) => html`
 							<div class="region-section">
-								<div class="region-scene">
+								<div
+									class="region-scene ${this.isDetailOpen && i === this.activeRegionIndex ? 'zoomed' : ''}"
+								>
 									<svg
 										viewBox="0 0 800 400"
 										preserveAspectRatio="xMidYMax meet"
