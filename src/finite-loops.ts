@@ -1424,23 +1424,7 @@ export class FiniteLoops extends LitElement {
 				return html`
 					<div class="scene-header">
 						<h2>The Overpass</h2>
-						<span class="scene-sub">where the high-rises meet the highway bridge</span>
-					</div>
-					<div class="member-grid">
-						${artists.map(
-							(a) => html`
-								<div class="member-card">
-									<span class="member-initial">${a.name[0].toUpperCase()}</span>
-									<span class="member-name">${a.name}</span>
-									<span class="member-meta">${a.releases.length} releases</span>
-								</div>
-							`,
-						)}
-					</div>
-					<div class="stats-row">
-						<div class="stat"><span class="stat-num">${releases.length}</span><span class="stat-label">releases</span></div>
-						<div class="stat"><span class="stat-num">${artists.length}</span><span class="stat-label">members</span></div>
-						<div class="stat"><span class="stat-num">${releases.reduce((n, r) => n + r.tracks.length, 0)}</span><span class="stat-label">tracks</span></div>
+						<span class="scene-sub">coming soon...</span>
 					</div>
 				`;
 
