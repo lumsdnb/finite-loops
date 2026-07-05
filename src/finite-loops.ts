@@ -865,6 +865,8 @@ export class FiniteLoops extends LitElement {
 			flex-direction: column;
 			gap: 4px;
 			transition: border-color 0.15s;
+			color: inherit;
+			text-decoration: none;
 		}
 
 		.artifact-card:hover {
@@ -1435,7 +1437,7 @@ export class FiniteLoops extends LitElement {
 						<span class="scene-sub">tools from the workshop</span>
 					</div>
 					<div class="artifact-grid">
-						<div class="artifact-card">
+						<a class="artifact-card" href="/404">
 							<div class="artifact-icon">
 								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 									<rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -1447,8 +1449,8 @@ export class FiniteLoops extends LitElement {
 							</div>
 							<h4>SP-404</h4>
 							<p>16-pad beat machine. keyboard + MIDI input. load samples, sequence patterns, perform live.</p>
-						</div>
-						<div class="artifact-card">
+						</a>
+						<a class="artifact-card" href="/tools/stems">
 							<div class="artifact-icon">
 								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 									<path d="M9 18V5l12-2v13"/>
@@ -1457,7 +1459,7 @@ export class FiniteLoops extends LitElement {
 							</div>
 							<h4>Stems</h4>
 							<p>split any track into isolated stems. vocals, drums, bass, other. drag and drop.</p>
-						</div>
+						</a>
 						<div class="artifact-card">
 							<div class="artifact-icon">
 								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

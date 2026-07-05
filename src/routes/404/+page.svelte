@@ -13,13 +13,21 @@
 	<title>FL-404 | finite loops</title>
 </svelte:head>
 
-<div class="page">
-	<div class="container">
-		<section class="section">
-			<h3 class="section-title">FL-404</h3>
-			{#if loaded}
-				<sp-app></sp-app>
-			{/if}
-		</section>
-	</div>
+<div class="sp-page">
+	{#if loaded}
+		<sp-app></sp-app>
+	{/if}
 </div>
+
+<style>
+	.sp-page {
+		height: calc(100dvh - var(--nav-height) - var(--player-height));
+		padding-top: var(--nav-height);
+		overflow: hidden;
+	}
+
+	.sp-page :global(sp-app) {
+		height: 100%;
+		min-height: 0;
+	}
+</style>
