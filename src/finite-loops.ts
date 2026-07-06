@@ -4,7 +4,6 @@ import "./components/top-nav";
 import "./components/audio-player";
 import { getAudioBus, type AudioTrack } from "./audio/audio-bus";
 import { releases, type Release } from "./lib/releases";
-import { artists } from "./lib/artists";
 import { posts } from "./lib/blog";
 import fntlps1Img from "./lib/assets/fntlps1.jpg";
 import fntlps2Img from "./lib/assets/fntlps2.jpg";
