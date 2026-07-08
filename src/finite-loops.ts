@@ -1,9 +1,10 @@
 import { LitElement, html, css, svg, nothing } from "lit";
 import { customElement, state, query } from "lit/decorators.js";
+import { Router } from "@lit-labs/router";
 import "./components/top-nav";
 import "./components/audio-player";
 import { getAudioBus, type AudioTrack } from "./audio/audio-bus";
-import { releases, type Release } from "./lib/releases";
+import { releases } from "./lib/releases";
 import { posts } from "./lib/blog";
 import fntlps1Img from "./lib/assets/fntlps1.jpg";
 import fntlps2Img from "./lib/assets/fntlps2.jpg";
@@ -46,17 +47,43 @@ const NAV_KEYS = new Set(["Space", "ArrowLeft", "ArrowRight", "KeyA", "KeyD"]);
 export class FiniteLoops extends LitElement {
 	@state() private activeRegionIndex = 0;
 	@state() private isDetailOpen = false;
-	@state() private _selectedRelease: Release | null = null;
 	@state() private _icecastData: IcecastStatus | null = null;
 	@state() private _audioPlaying = false;
 	@state() private _audioTrack: AudioTrack | null = null;
 	@state() private _isPlayerOpen = false;
+	@state() private _overlayItemId: string | null = null;
 
 	@query(".world-viewport") private _viewport!: HTMLElement;
 
 	private _isNavigating = false;
+	private _viewportReady = false;
 	private _audioBus = getAudioBus();
 	private _pollTimer: number | undefined;
+
+	private _router = new Router(this, [
+		{
+			path: "/",
+			enter: async () => {
+				window.history.replaceState(null, "", "/city");
+				await this._router.goto("/city");
+				return false;
+			},
+		},
+		{
+			path: "/:regionId",
+			enter: async (params) => {
+				this._applyRoute(params.regionId!, null);
+				return true;
+			},
+		},
+		{
+			path: "/:regionId/:itemId",
+			enter: async (params) => {
+				this._applyRoute(params.regionId!, params.itemId!);
+				return true;
+			},
+		},
+	]);
 
 	private readonly regions: Region[] = [
 		{
@@ -119,7 +146,6 @@ export class FiniteLoops extends LitElement {
 		document.removeEventListener("selectstart", this._preventSelection);
 		document.removeEventListener("dragstart", this._preventSelection);
 
-		window.removeEventListener("popstate", this._hydrateFromHash);
 		this.removeEventListener("wheel", this._handleWheel);
 		this._viewport?.removeEventListener("pointerdown", this._cancelNavigating);
 
@@ -135,8 +161,12 @@ export class FiniteLoops extends LitElement {
 	firstUpdated() {
 		this.addEventListener("wheel", this._handleWheel, { passive: false });
 		this._viewport.addEventListener("pointerdown", this._cancelNavigating);
-		this._hydrateFromHash();
-		window.addEventListener("popstate", this._hydrateFromHash);
+		this._viewportReady = true;
+
+		// Scroll to the region the router matched on initial load (instant, no animation)
+		requestAnimationFrame(() => {
+			this._scrollViewportToRegion(this.activeRegionIndex, "instant");
+		});
 	}
 
 	private _clampRegionIndex(index: number) {
@@ -150,18 +180,24 @@ export class FiniteLoops extends LitElement {
 		return clamped;
 	}
 
-	private _syncHash(index: number, mode: "push" | "replace" = "push") {
-		const regionId = this.regions[index].id;
-		const nextHash = `#${regionId}`;
-
-		if (window.location.hash === nextHash) return;
-
-		if (mode === "push") {
-			window.history.pushState(null, "", nextHash);
+	private _applyRoute(regionId: string, itemId: string | null) {
+		const index = this.regions.findIndex((r) => r.id === regionId);
+		if (index === -1) {
+			window.history.replaceState(null, "", "/city");
+			this._router.goto("/city");
 			return;
 		}
 
-		window.history.replaceState(null, "", nextHash);
+		const regionChanged = this.activeRegionIndex !== index;
+		this.activeRegionIndex = index;
+		this._overlayItemId = itemId;
+		if (itemId) this.isDetailOpen = false;
+
+		if (regionChanged && this._viewportReady) {
+			requestAnimationFrame(() => {
+				this._scrollViewportToRegion(index, "smooth");
+			});
+		}
 	}
 
 	private _scrollViewportToRegion(
@@ -181,7 +217,11 @@ export class FiniteLoops extends LitElement {
 
 	private _goToRegion(index: number, behavior: ScrollBehavior = "smooth") {
 		const clamped = this._setActiveRegion(index);
-		this._syncHash(clamped, "push");
+		const path = "/" + this.regions[clamped].id;
+		if (window.location.pathname !== path) {
+			window.history.pushState(null, "", path);
+			this._router.goto(path);
+		}
 		this._scrollViewportToRegion(clamped, behavior);
 	}
 
@@ -191,6 +231,12 @@ export class FiniteLoops extends LitElement {
 	}
 
 	private _handleKeyDown = (event: KeyboardEvent) => {
+		if (event.code === "Escape" && this._overlayItemId) {
+			event.preventDefault();
+			this._closeOverlay();
+			return;
+		}
+
 		if (NAV_KEYS.has(event.code)) {
 			event.preventDefault();
 		}
@@ -202,12 +248,12 @@ export class FiniteLoops extends LitElement {
 
 			case "ArrowLeft":
 			case "KeyA":
-				this._goToRegion(this.activeRegionIndex - 1);
+				if (!this._overlayItemId) this._goToRegion(this.activeRegionIndex - 1);
 				break;
 
 			case "ArrowRight":
 			case "KeyD":
-				this._goToRegion(this.activeRegionIndex + 1);
+				if (!this._overlayItemId) this._goToRegion(this.activeRegionIndex + 1);
 				break;
 		}
 	};
@@ -247,30 +293,20 @@ export class FiniteLoops extends LitElement {
 
 		this.activeRegionIndex = nextIndex;
 		this.isDetailOpen = false;
-		this._syncHash(nextIndex, "replace");
+		this._overlayItemId = null;
+
+		const newPath = "/" + this.regions[nextIndex].id;
+		if (window.location.pathname !== newPath) {
+			window.history.replaceState(null, "", newPath);
+		}
 	};
 
 	private _handleNavRequest = (event: CustomEvent<{ index: number }>) => {
-		this._scrollToRegion(event.detail.index);
+		this._goToRegion(event.detail.index);
 	};
 
 	private _toggleDetail = () => {
 		this.isDetailOpen = !this.isDetailOpen;
-		if (!this.isDetailOpen) this._selectedRelease = null;
-	};
-
-	private _hydrateFromHash = () => {
-		const hash = window.location.hash.replace("#", "");
-		if (!hash) return;
-
-		const index = this.regions.findIndex((region) => region.id === hash);
-		if (index === -1) return;
-
-		this.activeRegionIndex = index;
-
-		requestAnimationFrame(() => {
-			this._scrollToRegion(index);
-		});
 	};
 
 	private async _fetchIcecastStatus() {
@@ -312,6 +348,14 @@ export class FiniteLoops extends LitElement {
 		if (this._audioPlaying) {
 			this._isPlayerOpen = !this._isPlayerOpen;
 		}
+	};
+
+	private _closeOverlay = () => {
+		const regionId = this.regions[this.activeRegionIndex].id;
+		const path = "/" + regionId;
+		this._overlayItemId = null;
+		window.history.pushState(null, "", path);
+		this._router.goto(path);
 	};
 
 	private _handleTogglePlayback = () => {
@@ -663,13 +707,14 @@ export class FiniteLoops extends LitElement {
 			transition: border-color 0.15s;
 			font-family: inherit;
 			color: inherit;
+			text-decoration: none;
 			display: flex;
 			flex-direction: column;
 			align-items: center;
 			gap: 6px;
 		}
 
-		.release-card:hover, .release-card.selected {
+		.release-card:hover {
 			border-color: #00e5ff;
 		}
 
@@ -913,6 +958,9 @@ export class FiniteLoops extends LitElement {
 			padding: 14px;
 			border-left: 3px solid #ff2d7b;
 			transition: border-color 0.15s;
+			text-decoration: none;
+			color: inherit;
+			display: block;
 		}
 
 		.post-card:hover {
@@ -1195,6 +1243,72 @@ export class FiniteLoops extends LitElement {
 			filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.3));
 		}
 
+		/* --- Full-width overlay (sub-routes) --- */
+
+		.overlay-region {
+			position: absolute;
+			inset: 0;
+			top: var(--lums-top-nav-height);
+			z-index: 15;
+			display: flex;
+			align-items: stretch;
+			justify-content: center;
+			background: rgba(0, 0, 0, 0.85);
+			animation: overlayFadeIn 0.3s ease;
+		}
+
+		@keyframes overlayFadeIn {
+			from { opacity: 0; }
+			to { opacity: 1; }
+		}
+
+		.overlay-panel {
+			width: 100%;
+			max-width: 800px;
+			display: flex;
+			flex-direction: column;
+			position: relative;
+			background: #0a0a0a;
+			border-left: 1px solid #2a2a2a;
+			border-right: 1px solid #2a2a2a;
+			font-family: 'Courier New', monospace;
+			color: #e0e0e0;
+		}
+
+		.overlay-close {
+			position: absolute;
+			top: 12px;
+			right: 16px;
+			background: none;
+			border: none;
+			color: #888;
+			font-size: 1.5rem;
+			cursor: pointer;
+			z-index: 2;
+			line-height: 1;
+			font-family: inherit;
+		}
+
+		.overlay-close:hover {
+			color: #00e5ff;
+		}
+
+		.overlay-scroll {
+			overflow-y: auto;
+			padding: 1.5rem;
+			flex: 1;
+			scrollbar-width: thin;
+			scrollbar-color: #333 transparent;
+		}
+
+		.overlay-cover {
+			width: 100%;
+			max-width: 300px;
+			aspect-ratio: 1;
+			object-fit: cover;
+			margin-bottom: 1rem;
+		}
+
 		.nav-left,
 		.nav-right {
 			position: absolute;
@@ -1213,6 +1327,7 @@ export class FiniteLoops extends LitElement {
 				drop-shadow(0px -6px 4px rgba(255, 255, 255, 0.18))
 				drop-shadow(3px 0px 2px rgba(0, 0, 0, 0.06))
 				drop-shadow(-3px 0px 2px rgba(255, 255, 255, 0.1));
+			transition: opacity 0.3s ease;
 		}
 
 		.nav-left {
@@ -1227,6 +1342,12 @@ export class FiniteLoops extends LitElement {
 		.nav-right.disabled {
 			pointer-events: none;
 			opacity: 0.25;
+		}
+
+		.nav-left.hidden,
+		.nav-right.hidden {
+			opacity: 0;
+			pointer-events: none;
 		}
 
 		.nav-left svg,
@@ -1259,8 +1380,8 @@ export class FiniteLoops extends LitElement {
 					@stop-playback=${this._handleStopPlayback}
 				></audio-player>
 
-				<div class="detail-region ${this.isDetailOpen ? 'open' : ''}" @click=${this._toggleDetail}>
-					<div class="detail-card ${this.isDetailOpen ? 'active' : ''}" @click=${(e: Event) => e.stopPropagation()}>
+				<div class="detail-region ${this.isDetailOpen && !this._overlayItemId ? 'open' : ''}" @click=${this._toggleDetail}>
+					<div class="detail-card ${this.isDetailOpen && !this._overlayItemId ? 'active' : ''}" @click=${(e: Event) => e.stopPropagation()}>
 						<button class="detail-close" @click=${this._toggleDetail}>&times;</button>
 						<div class="detail-content">
 							${this._renderDetailContent(active.id)}
@@ -1268,12 +1389,25 @@ export class FiniteLoops extends LitElement {
 					</div>
 				</div>
 
+				${this._overlayItemId
+					? html`
+						<div class="overlay-region" @click=${this._closeOverlay}>
+							<div class="overlay-panel" @click=${(e: Event) => e.stopPropagation()}>
+								<button class="overlay-close" @click=${this._closeOverlay}>&times;</button>
+								<div class="overlay-scroll">
+									${this._renderOverlayContent(active.id, this._overlayItemId)}
+								</div>
+							</div>
+						</div>
+					`
+					: nothing}
+
 				<div class="world-viewport" @scroll=${this._handleScroll}>
 					${this.regions.map(
 						(region, i) => html`
 							<div class="region-section">
 								<div
-									class="region-scene ${this.isDetailOpen && i === this.activeRegionIndex ? 'zoomed' : ''}"
+									class="region-scene ${this.isDetailOpen && !this._overlayItemId && i === this.activeRegionIndex ? 'zoomed' : ''}"
 								>
 									<svg
 										viewBox="0 0 800 400"
@@ -1288,18 +1422,14 @@ export class FiniteLoops extends LitElement {
 					)}
 				</div>
 
-				<div class="nav-left" @click=${this._prevRegion}>
+				<div class="nav-left ${this._overlayItemId ? 'hidden' : ''} ${this.activeRegionIndex === 0 ? 'disabled' : ''}" @click=${this._prevRegion}>
 					${this._caretSvg(false)}
 				</div>
-				<div class="nav-right" @click=${this._nextRegion}>
+				<div class="nav-right ${this._overlayItemId ? 'hidden' : ''} ${this.activeRegionIndex === this.regions.length - 1 ? 'disabled' : ''}" @click=${this._nextRegion}>
 					${this._caretSvg(true)}
 				</div>
 			</div>
 		`;
-	}
-
-	private _selectRelease(r: Release) {
-		this._selectedRelease = this._selectedRelease?.slug === r.slug ? null : r;
 	}
 
 	private _renderDetailContent(id: string) {
@@ -1312,49 +1442,14 @@ export class FiniteLoops extends LitElement {
 					<div class="release-grid">
 						${releases.map(
 							(r) => html`
-								<button
-									class="release-card ${this._selectedRelease?.slug === r.slug ? 'selected' : ''}"
-									@click=${() => this._selectRelease(r)}
-								>
+								<a class="release-card" href=${"/record-shop/" + r.slug}>
 									<img class="release-cover" src=${coverImages[r.slug]} alt=${r.title} />
 									<span class="release-title">${r.title}</span>
 									<span class="release-meta">${r.tracks.length} tracks</span>
-								</button>
+								</a>
 							`,
 						)}
 					</div>
-					${this._selectedRelease
-						? html`
-								<div class="release-detail">
-									<div class="detail-header">
-										<h3>${this._selectedRelease.title}</h3>
-										<span class="release-date">${this._selectedRelease.release_date}</span>
-									</div>
-									<div class="track-list">
-										${this._selectedRelease.tracks.map(
-											(t, i) => html`
-												<div class="track-row">
-													<span class="track-num">${String(i + 1).padStart(2, "0")}</span>
-													<span class="track-name">${t.title}</span>
-													<span class="track-dur">${t.duration}</span>
-												</div>
-											`,
-										)}
-									</div>
-									<div class="release-contributors">
-										${this._selectedRelease.contributors.map(
-											(c) => html`<span class="contrib-tag">${c}</span>`,
-										)}
-									</div>
-									<a
-										class="bandcamp-link"
-										href=${this._selectedRelease.bandcampUrl}
-										target="_blank"
-										rel="noopener"
-									>listen on bandcamp</a>
-								</div>
-							`
-						: nothing}
 				`;
 
 			case "broadcast": {
@@ -1436,7 +1531,7 @@ export class FiniteLoops extends LitElement {
 						<span class="scene-sub">tools from the workshop</span>
 					</div>
 					<div class="artifact-grid">
-						<a class="artifact-card" href="/404">
+						<a class="artifact-card" href="/ancient-relic/sp-404">
 							<div class="artifact-icon">
 								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 									<rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -1449,7 +1544,7 @@ export class FiniteLoops extends LitElement {
 							<h4>SP-404</h4>
 							<p>16-pad beat machine. keyboard + MIDI input. load samples, sequence patterns, perform live.</p>
 						</a>
-						<a class="artifact-card" href="/tools/stems">
+						<a class="artifact-card" href="/ancient-relic/stems">
 							<div class="artifact-icon">
 								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 									<path d="M9 18V5l12-2v13"/>
@@ -1459,7 +1554,7 @@ export class FiniteLoops extends LitElement {
 							<h4>Stems</h4>
 							<p>split any track into isolated stems. vocals, drums, bass, other. drag and drop.</p>
 						</a>
-						<div class="artifact-card">
+						<a class="artifact-card" href="/ancient-relic/sample-library">
 							<div class="artifact-icon">
 								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 									<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
@@ -1468,7 +1563,7 @@ export class FiniteLoops extends LitElement {
 							</div>
 							<h4>Sample Library</h4>
 							<p>curated drum kits and one-shots. zildjian, sabian, paiste, vintage customs.</p>
-						</div>
+						</a>
 					</div>
 				`;
 
@@ -1481,12 +1576,12 @@ export class FiniteLoops extends LitElement {
 					<div class="post-stack">
 						${posts.map(
 							(p) => html`
-								<div class="post-card">
+								<a class="post-card" href=${"/board/" + p.slug}>
 									<span class="post-date">${p.date}</span>
 									<h4 class="post-title">${p.title}</h4>
 									<p class="post-excerpt">${p.excerpt}</p>
 									<span class="post-author">-- ${p.author}</span>
-								</div>
+								</a>
 							`,
 						)}
 					</div>
@@ -1515,6 +1610,74 @@ export class FiniteLoops extends LitElement {
 		}
 	}
 
+	private _renderOverlayContent(regionId: string, itemId: string) {
+		switch (regionId) {
+			case "record-shop": {
+				const release = releases.find((r) => r.slug === itemId);
+				if (!release)
+					return html`<p>Release not found.</p>`;
+				return html`
+					<div class="scene-header">
+						<h2>${release.title}</h2>
+						<span class="scene-sub">${release.release_date}</span>
+					</div>
+					<img class="overlay-cover" src=${coverImages[release.slug]} alt=${release.title} />
+					<div class="track-list">
+						${release.tracks.map(
+							(t, i) => html`
+								<div class="track-row">
+									<span class="track-num">${String(i + 1).padStart(2, "0")}</span>
+									<span class="track-name">${t.title}</span>
+									<span class="track-dur">${t.duration}</span>
+								</div>
+							`,
+						)}
+					</div>
+					<div class="release-contributors">
+						${release.contributors.map(
+							(c) => html`<span class="contrib-tag">${c}</span>`,
+						)}
+					</div>
+					<a
+						class="bandcamp-link"
+						href=${release.bandcampUrl}
+						target="_blank"
+						rel="noopener"
+					>listen on bandcamp</a>
+				`;
+			}
+
+			case "board": {
+				const post = posts.find((p) => p.slug === itemId);
+				if (!post)
+					return html`<p>Post not found.</p>`;
+				return html`
+					<div class="scene-header">
+						<h2>${post.title}</h2>
+						<span class="scene-sub">${post.date} // ${post.author}</span>
+					</div>
+					<div class="scene-body">
+						<p>${post.excerpt}</p>
+					</div>
+				`;
+			}
+
+			case "ancient-relic":
+				return html`
+					<div class="scene-header">
+						<h2>Artifacts</h2>
+						<span class="scene-sub">${itemId}</span>
+					</div>
+					<div class="scene-body">
+						<p>Loading artifact...</p>
+					</div>
+				`;
+
+			default:
+				return html`<p>${this._activeRegion.desc}</p>`;
+		}
+	}
+
 	private _caretSvg(flipped = false) {
 		return html`
 			<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1531,10 +1694,10 @@ export class FiniteLoops extends LitElement {
 	}
 
 	private _nextRegion = () => {
-		this._scrollToRegion(this.activeRegionIndex + 1);
+		this._goToRegion(this.activeRegionIndex + 1);
 	};
 
 	private _prevRegion = () => {
-		this._scrollToRegion(this.activeRegionIndex - 1);
+		this._goToRegion(this.activeRegionIndex - 1);
 	};
 }
