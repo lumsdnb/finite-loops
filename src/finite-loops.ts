@@ -57,6 +57,7 @@ export class FiniteLoops extends LitElement {
 
 	private _isNavigating = false;
 	private _viewportReady = false;
+	private _animateOverlay = false;
 	private _audioBus = getAudioBus();
 	private _pollTimer: number | undefined;
 
@@ -162,6 +163,7 @@ export class FiniteLoops extends LitElement {
 		this.addEventListener("wheel", this._handleWheel, { passive: false });
 		this._viewport.addEventListener("pointerdown", this._cancelNavigating);
 		this._viewportReady = true;
+		this._animateOverlay = true;
 
 		// Scroll to the region the router matched on initial load (instant, no animation)
 		requestAnimationFrame(() => {
@@ -626,24 +628,6 @@ export class FiniteLoops extends LitElement {
 			transform: translateY(0) scale(1);
 			opacity: 1;
 			pointer-events: auto;
-		}
-
-		.detail-close {
-			position: absolute;
-			top: 8px;
-			right: 12px;
-			background: none;
-			border: none;
-			color: #888;
-			font-size: 1.5rem;
-			cursor: pointer;
-			z-index: 2;
-			line-height: 1;
-			font-family: inherit;
-		}
-
-		.detail-close:hover {
-			color: #00e5ff;
 		}
 
 		.detail-content {
@@ -1220,8 +1204,11 @@ export class FiniteLoops extends LitElement {
 			display: flex;
 			align-items: stretch;
 			justify-content: center;
-			background: rgba(0, 0, 0, 0.85);
-			animation: overlayFadeIn 0.3s ease;
+			background: rgba(0, 0, 0, 0.4);
+		}
+
+		.overlay-region.animate {
+			animation: overlayFadeIn 0.25s ease;
 		}
 
 		@keyframes overlayFadeIn {
@@ -1235,28 +1222,28 @@ export class FiniteLoops extends LitElement {
 			display: flex;
 			flex-direction: column;
 			position: relative;
-			background: #0a0a0a;
-			border-left: 1px solid #2a2a2a;
-			border-right: 1px solid #2a2a2a;
+			background: #e7e7e7;
+			border-left: 1px solid #ccc;
+			border-right: 1px solid #ccc;
 			font-family: 'Courier New', monospace;
-			color: #e0e0e0;
+			color: #222;
 		}
 
-		.overlay-close {
-			position: absolute;
-			top: 12px;
-			right: 16px;
-			background: none;
+		.overlay-back {
+			background: #111;
 			border: none;
-			color: #888;
-			font-size: 1.5rem;
+			color: #e7e7e7;
+			font-family: 'Courier New', monospace;
+			font-size: 0.8rem;
+			text-transform: uppercase;
+			letter-spacing: 0.12em;
+			padding: 14px;
 			cursor: pointer;
-			z-index: 2;
-			line-height: 1;
-			font-family: inherit;
+			flex-shrink: 0;
 		}
 
-		.overlay-close:hover {
+		.overlay-back:hover {
+			background: #222;
 			color: #00e5ff;
 		}
 
@@ -1265,7 +1252,60 @@ export class FiniteLoops extends LitElement {
 			padding: 1.5rem;
 			flex: 1;
 			scrollbar-width: thin;
-			scrollbar-color: #333 transparent;
+			scrollbar-color: #bbb transparent;
+		}
+
+		/* Light-scheme overrides for overlay content */
+		.overlay-scroll .scene-header {
+			border-bottom-color: #ccc;
+		}
+
+		.overlay-scroll .scene-header h2 {
+			color: #111;
+		}
+
+		.overlay-scroll .scene-sub {
+			color: #666;
+		}
+
+		.overlay-scroll .scene-body {
+			color: #444;
+		}
+
+		.overlay-scroll .track-row {
+			border-bottom-color: #ddd;
+		}
+
+		.overlay-scroll .track-num {
+			color: #999;
+		}
+
+		.overlay-scroll .track-dur {
+			color: #888;
+		}
+
+		.overlay-scroll .contrib-tag {
+			background: #111;
+			color: #e7e7e7;
+			border-color: #111;
+			padding: 3px 8px;
+		}
+
+		.overlay-scroll .bandcamp-link {
+			background: #111;
+			color: #00e5ff;
+			padding: 8px 16px;
+			border-bottom: none;
+			display: inline-block;
+			margin-top: 0.5rem;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			font-size: 0.75rem;
+		}
+
+		.overlay-scroll .bandcamp-link:hover {
+			background: #222;
+			color: #b5ff00;
 		}
 
 		.overlay-cover {
@@ -1274,6 +1314,7 @@ export class FiniteLoops extends LitElement {
 			aspect-ratio: 1;
 			object-fit: cover;
 			margin-bottom: 1rem;
+			border: 1px solid #ccc;
 		}
 
 		.nav-left,
@@ -1349,7 +1390,6 @@ export class FiniteLoops extends LitElement {
 
 				<div class="detail-region ${this.isDetailOpen && !this._overlayItemId ? 'open' : ''}" @click=${this._toggleDetail}>
 					<div class="detail-card ${this.isDetailOpen && !this._overlayItemId ? 'active' : ''}" @click=${(e: Event) => e.stopPropagation()}>
-						<button class="detail-close" @click=${this._toggleDetail}>&times;</button>
 						<div class="detail-content">
 							${this._renderDetailContent(active.id)}
 						</div>
@@ -1358,12 +1398,12 @@ export class FiniteLoops extends LitElement {
 
 				${this._overlayItemId
 					? html`
-						<div class="overlay-region" @click=${this._closeOverlay}>
+						<div class="overlay-region ${this._animateOverlay ? 'animate' : ''}" @click=${this._closeOverlay}>
 							<div class="overlay-panel" @click=${(e: Event) => e.stopPropagation()}>
-								<button class="overlay-close" @click=${this._closeOverlay}>&times;</button>
 								<div class="overlay-scroll">
 									${this._renderOverlayContent(active.id, this._overlayItemId)}
 								</div>
+								<button class="overlay-back" @click=${this._closeOverlay}>go back</button>
 							</div>
 						</div>
 					`

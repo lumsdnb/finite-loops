@@ -12,6 +12,7 @@ export declare class FiniteLoops extends LitElement {
     private _viewport;
     private _isNavigating;
     private _viewportReady;
+    private _animateOverlay;
     private _audioBus;
     private _pollTimer;
     private _router;
