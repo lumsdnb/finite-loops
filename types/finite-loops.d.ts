@@ -26,7 +26,6 @@ export declare class FiniteLoops extends LitElement {
     private _applyRoute;
     private _scrollViewportToRegion;
     private _goToRegion;
-    private _scrollToRegion;
     private _handleKeyDown;
     private _cancelNavigating;
     private _handleWheel;

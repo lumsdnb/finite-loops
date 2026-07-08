@@ -225,11 +225,6 @@ export class FiniteLoops extends LitElement {
 		this._scrollViewportToRegion(clamped, behavior);
 	}
 
-	private _scrollToRegion(index: number, behavior: ScrollBehavior = "smooth") {
-		const clamped = this._setActiveRegion(index);
-		this._scrollViewportToRegion(clamped, behavior);
-	}
-
 	private _handleKeyDown = (event: KeyboardEvent) => {
 		if (event.code === "Escape" && this._overlayItemId) {
 			event.preventDefault();
@@ -733,34 +728,6 @@ export class FiniteLoops extends LitElement {
 		}
 
 		.release-meta {
-			font-size: 0.7rem;
-			color: #666;
-		}
-
-		.release-detail {
-			background: #111;
-			border: 1px solid #2a2a2a;
-			padding: 1rem;
-			margin-top: 0.5rem;
-		}
-
-		.detail-header {
-			display: flex;
-			justify-content: space-between;
-			align-items: baseline;
-			margin-bottom: 0.75rem;
-		}
-
-		.detail-header h3 {
-			font-size: 1rem;
-			text-transform: uppercase;
-			letter-spacing: 0.05em;
-			margin: 0;
-			font-family: inherit;
-			font-weight: 700;
-		}
-
-		.release-date {
 			font-size: 0.7rem;
 			color: #666;
 		}
