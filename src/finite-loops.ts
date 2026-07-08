@@ -234,6 +234,9 @@ export class FiniteLoops extends LitElement {
 			return;
 		}
 
+		// When overlay is active, don't intercept keys (let embedded components handle them)
+		if (this._overlayItemId) return;
+
 		if (NAV_KEYS.has(event.code)) {
 			event.preventDefault();
 		}
@@ -245,12 +248,12 @@ export class FiniteLoops extends LitElement {
 
 			case "ArrowLeft":
 			case "KeyA":
-				if (!this._overlayItemId) this._goToRegion(this.activeRegionIndex - 1);
+				this._goToRegion(this.activeRegionIndex - 1);
 				break;
 
 			case "ArrowRight":
 			case "KeyD":
-				if (!this._overlayItemId) this._goToRegion(this.activeRegionIndex + 1);
+				this._goToRegion(this.activeRegionIndex + 1);
 				break;
 		}
 	};
@@ -593,35 +596,46 @@ export class FiniteLoops extends LitElement {
 			z-index: 10;
 			pointer-events: none;
 			display: flex;
-			align-items: flex-start;
+			align-items: flex-end;
 			justify-content: center;
-			padding: 1rem;
-			background: rgba(0, 0, 0, 0);
-			transition: background 0.3s ease;
+			padding: 0 1rem 15%;
 		}
 
 		.detail-region.open {
 			pointer-events: auto;
-			background: rgba(0, 0, 0, 0.5);
 		}
 
 		.detail-card {
 			background: #0a0a0a;
-			border: 2px solid #2a2a2a;
 			padding: 0;
-			width: 90vw;
-			max-width: 600px;
-			max-height: 75vh;
+			width: auto;
+			min-width: 200px;
+			max-width: 500px;
+			max-height: 60vh;
 			overflow: hidden;
 			display: flex;
 			flex-direction: column;
-			transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-			transform: translateY(30px) scale(0.95);
+			transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+			transform: translateY(12px) scale(0.9);
 			opacity: 0;
 			pointer-events: none;
 			position: relative;
 			font-family: 'Courier New', monospace;
 			color: #e0e0e0;
+			border-radius: 4px;
+		}
+
+		.detail-card::after {
+			content: '';
+			position: absolute;
+			bottom: -8px;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 0;
+			height: 0;
+			border-left: 8px solid transparent;
+			border-right: 8px solid transparent;
+			border-top: 8px solid #0a0a0a;
 		}
 
 		.detail-card.active {
@@ -632,7 +646,7 @@ export class FiniteLoops extends LitElement {
 
 		.detail-content {
 			overflow-y: auto;
-			padding: 1.5rem;
+			padding: 1rem;
 			scrollbar-width: thin;
 			scrollbar-color: #333 transparent;
 		}
@@ -640,13 +654,13 @@ export class FiniteLoops extends LitElement {
 		/* --- Scene shared --- */
 
 		.scene-header {
-			margin-bottom: 1.25rem;
-			border-bottom: 3px solid #2a2a2a;
-			padding-bottom: 0.75rem;
+			margin-bottom: 0.75rem;
+			padding-bottom: 0.5rem;
+			border-bottom: 1px solid #222;
 		}
 
 		.scene-header h2 {
-			font-size: 1.4rem;
+			font-size: 1rem;
 			text-transform: uppercase;
 			letter-spacing: 0.1em;
 			margin: 0;
@@ -655,17 +669,17 @@ export class FiniteLoops extends LitElement {
 		}
 
 		.scene-sub {
-			font-size: 0.75rem;
-			color: #888;
+			font-size: 0.65rem;
+			color: #666;
 			text-transform: uppercase;
 			letter-spacing: 0.06em;
 		}
 
 		.scene-body {
-			font-size: 0.85rem;
-			color: #aaa;
-			line-height: 1.6;
-			margin: 1rem 0;
+			font-size: 0.8rem;
+			color: #999;
+			line-height: 1.5;
+			margin: 0.5rem 0;
 		}
 
 		/* --- Record Shop --- */
@@ -848,20 +862,23 @@ export class FiniteLoops extends LitElement {
 
 		.artifact-grid {
 			display: flex;
-			flex-direction: column;
-			gap: 10px;
+			gap: 8px;
 		}
 
 		.artifact-card {
 			background: #111;
-			border: 1px solid #2a2a2a;
-			padding: 14px;
+			aspect-ratio: 1;
+			width: 80px;
 			display: flex;
 			flex-direction: column;
-			gap: 4px;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
 			transition: border-color 0.15s;
 			color: inherit;
 			text-decoration: none;
+			border: 1px solid #222;
+			border-radius: 4px;
 		}
 
 		.artifact-card:hover {
@@ -869,8 +886,8 @@ export class FiniteLoops extends LitElement {
 		}
 
 		.artifact-icon {
-			width: 28px;
-			height: 28px;
+			width: 24px;
+			height: 24px;
 			color: #00e5ff;
 		}
 
@@ -880,19 +897,12 @@ export class FiniteLoops extends LitElement {
 		}
 
 		.artifact-card h4 {
-			font-size: 0.9rem;
+			font-size: 0.55rem;
 			text-transform: uppercase;
 			letter-spacing: 0.05em;
 			margin: 0;
 			font-family: inherit;
 			font-weight: 700;
-		}
-
-		.artifact-card p {
-			font-size: 0.75rem;
-			color: #888;
-			margin: 0;
-			line-height: 1.5;
 		}
 
 		/* --- Board --- */
@@ -1308,6 +1318,11 @@ export class FiniteLoops extends LitElement {
 			color: #b5ff00;
 		}
 
+		.overlay-sp-app {
+			min-height: 0;
+			height: 100%;
+		}
+
 		.overlay-cover {
 			width: 100%;
 			max-width: 300px;
@@ -1443,9 +1458,6 @@ export class FiniteLoops extends LitElement {
 		switch (id) {
 			case "record-shop":
 				return html`
-					<div class="scene-header">
-						<h2>Record Shop</h2>
-					</div>
 					<div class="release-grid">
 						${releases.map(
 							(r) => html`
@@ -1467,11 +1479,6 @@ export class FiniteLoops extends LitElement {
 					: null;
 
 				return html`
-					<div class="scene-header">
-						<h2>Broadcast</h2>
-						<span class="scene-sub">finite loops radio</span>
-					</div>
-
 					<div class="radio-status">
 						<span class="status-dot ${isLive ? 'live' : 'offline'}"></span>
 						<span class="status-text">${isLive ? "LIVE" : "OFFLINE"}</span>
@@ -1502,7 +1509,6 @@ export class FiniteLoops extends LitElement {
 											>
 												${this._audioTrack?.url === s.listenurl ? 'STOP' : 'PLAY'}
 											</button>
-											<div class="stream-url">${s.listenurl}</div>
 										</div>
 									`,
 								)}
@@ -1512,31 +1518,16 @@ export class FiniteLoops extends LitElement {
 									<p class="no-streams">No active streams</p>
 								</div>
 							`}
-
-					${this._icecastData
-						? html`
-								<div class="server-info">
-									<span>${this._icecastData.server_id}</span>
-								</div>
-							`
-						: nothing}
 				`;
 			}
 
 			case "city":
 				return html`
-					<div class="scene-header">
-						<h2>The Overpass</h2>
-						<span class="scene-sub">coming soon...</span>
-					</div>
+					<span class="scene-sub">coming soon</span>
 				`;
 
 			case "ancient-relic":
 				return html`
-					<div class="scene-header">
-						<h2>Artifacts</h2>
-						<span class="scene-sub">tools from the workshop</span>
-					</div>
 					<div class="artifact-grid">
 						<a class="artifact-card" href="/ancient-relic/sp-404">
 							<div class="artifact-icon">
@@ -1549,7 +1540,6 @@ export class FiniteLoops extends LitElement {
 								</svg>
 							</div>
 							<h4>SP-404</h4>
-							<p>16-pad beat machine. keyboard + MIDI input. load samples, sequence patterns, perform live.</p>
 						</a>
 						<a class="artifact-card" href="/ancient-relic/stems">
 							<div class="artifact-icon">
@@ -1559,7 +1549,6 @@ export class FiniteLoops extends LitElement {
 								</svg>
 							</div>
 							<h4>Stems</h4>
-							<p>split any track into isolated stems. vocals, drums, bass, other. drag and drop.</p>
 						</a>
 						<a class="artifact-card" href="/ancient-relic/sample-library">
 							<div class="artifact-icon">
@@ -1568,18 +1557,13 @@ export class FiniteLoops extends LitElement {
 									<path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/>
 								</svg>
 							</div>
-							<h4>Sample Library</h4>
-							<p>curated drum kits and one-shots. zildjian, sabian, paiste, vintage customs.</p>
+							<h4>Samples</h4>
 						</a>
 					</div>
 				`;
 
 			case "board":
 				return html`
-					<div class="scene-header">
-						<h2>The Board</h2>
-						<span class="scene-sub">community news & dispatches</span>
-					</div>
 					<div class="post-stack">
 						${posts.map(
 							(p) => html`
@@ -1596,10 +1580,6 @@ export class FiniteLoops extends LitElement {
 
 			case "soundsystem":
 				return html`
-					<div class="scene-header">
-						<h2>The Soundwall</h2>
-						<span class="scene-sub">live audio & collective frequency</span>
-					</div>
 					<div class="now-playing">
 						<span class="np-label">latest drop</span>
 						<div class="np-release">
@@ -1670,13 +1650,15 @@ export class FiniteLoops extends LitElement {
 			}
 
 			case "ancient-relic":
+				if (itemId === "sp-404")
+					return html`<sp-app class="overlay-sp-app"></sp-app>`;
 				return html`
 					<div class="scene-header">
 						<h2>Artifacts</h2>
 						<span class="scene-sub">${itemId}</span>
 					</div>
 					<div class="scene-body">
-						<p>Loading artifact...</p>
+						<p>Coming soon.</p>
 					</div>
 				`;
 
