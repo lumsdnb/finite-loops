@@ -1389,10 +1389,10 @@ export class FiniteLoops extends LitElement {
 					)}
 				</div>
 
-				<div class="nav-left ${this._overlayItemId ? 'hidden' : ''} ${this.activeRegionIndex === 0 ? 'disabled' : ''}" @click=${this._prevRegion}>
+				<div class="nav-left ${this._overlayItemId || this.isDetailOpen ? 'hidden' : ''} ${this.activeRegionIndex === 0 ? 'disabled' : ''}" @click=${this._prevRegion}>
 					${this._caretSvg(false)}
 				</div>
-				<div class="nav-right ${this._overlayItemId ? 'hidden' : ''} ${this.activeRegionIndex === this.regions.length - 1 ? 'disabled' : ''}" @click=${this._nextRegion}>
+				<div class="nav-right ${this._overlayItemId || this.isDetailOpen ? 'hidden' : ''} ${this.activeRegionIndex === this.regions.length - 1 ? 'disabled' : ''}" @click=${this._nextRegion}>
 					${this._caretSvg(true)}
 				</div>
 			</div>
