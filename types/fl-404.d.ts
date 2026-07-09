@@ -4,7 +4,6 @@ import "./components/control-panel";
 export declare class Fl404 extends LitElement {
     private samples;
     private sampleNames;
-    private midiEnabled;
     private audioPlaybackManager;
     private midiInputs;
     private currentPadIndex;

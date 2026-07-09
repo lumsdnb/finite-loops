@@ -8,5 +8,4 @@ export declare class ControlPanel extends LitElement {
     mode: "performance" | "sequencer";
     static styles: import("lit").CSSResult;
     render(): import("lit").TemplateResult<1>;
-    private _handleBpmChange;
 }

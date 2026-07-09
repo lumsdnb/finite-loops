@@ -15,7 +15,6 @@ import { SampleWaveform } from "./components/sample-waveform";
 export class Fl404 extends LitElement {
   @state() private samples: Map<number, AudioBuffer> = new Map();
   @state() private sampleNames: Map<number, string> = new Map();
-  @state() private midiEnabled = false;
   private audioPlaybackManager: AudioPlaybackManager | undefined;
   @state() private midiInputs: Input[] = [];
   @state() private currentPadIndex = -1;
@@ -151,7 +150,6 @@ export class Fl404 extends LitElement {
   private async initMidi() {
     try {
       await WebMidi.enable();
-      this.midiEnabled = true;
       this.midiInputs = WebMidi.inputs;
 
       this.midiInputs.forEach((input) => {
@@ -193,8 +191,7 @@ export class Fl404 extends LitElement {
       margin: 0;
       padding: 0;
       width: 100%;
-      min-height: 100dvh;
-      height: 100dvh;
+      height: 100%;
       overflow: hidden;
     }
 
@@ -297,22 +294,7 @@ export class Fl404 extends LitElement {
       word-break: break-word;
     }
 
-    .midi-status {
-      font-size: 0.92rem;
-      color: #aaa;
-      line-height: 1.35;
-    }
-
-    .devices {
-      margin-top: 0.5rem;
-      font-size: 0.86rem;
-      color: #bbb;
-      line-height: 1.35;
-      word-break: break-word;
-    }
-
     .control-panel-wrap {
-      margin-top: 0.75rem;
       min-width: 0;
     }
 
@@ -321,43 +303,9 @@ export class Fl404 extends LitElement {
       width: 100%;
     }
 
-    .stack-note {
-      margin-top: 0.5rem;
-      font-size: 0.86rem;
-      color: #bbb;
-      line-height: 1.35;
-    }
-
-    .sample-count {
-      margin-top: 0.5rem;
-      font-size: 0.86rem;
-      color: #bbb;
-      line-height: 1.35;
-    }
-
     @media (max-width: 1023px) {
       .controls-shell {
-        height: clamp(190px, 28dvh, 280px);
-      }
-
-      .control-stack {
-        height: 100%;
         overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: contain;
-        scroll-snap-type: y mandatory;
-        padding-right: 0.15rem;
-      }
-
-      .control-page {
-        min-height: 100%;
-        scroll-snap-align: start;
-        scroll-snap-stop: always;
-      }
-
-      .control-panel-wrap control-panel {
-        max-height: calc(28dvh - 6.5rem);
-        overflow: hidden;
       }
     }
 
@@ -405,13 +353,6 @@ export class Fl404 extends LitElement {
       this.currentPadIndex >= 0
         ? this.sampleNames.get(this.currentPadIndex) || ""
         : "";
-
-    const midiDeviceSummary =
-      this.midiInputs.length > 0
-        ? this.midiInputs
-            .map((input) => input.name || "Unnamed device")
-            .join(", ")
-        : "No MIDI devices connected.";
 
     return html`
       <div class="app-body">
@@ -465,23 +406,6 @@ export class Fl404 extends LitElement {
             </section>
 
             <section class="control-page">
-              <div class="midi-status">
-                MIDI: ${this.midiEnabled ? "Enabled" : "Disabled"}
-                ${
-                  this.midiEnabled
-                    ? html` (${this.midiInputs.length}
-                      device${this.midiInputs.length !== 1 ? "s" : ""}
-                      connected)`
-                    : ""
-                }
-              </div>
-
-              <div class="devices">${midiDeviceSummary}</div>
-
-              <div class="sample-count">
-                Samples loaded: ${this.samples.size}/${DEFAULT_SAMPLES.length}
-              </div>
-
               <div class="control-panel-wrap">
                 <control-panel
                   .currentPadIndex=${this.currentPadIndex}
@@ -491,26 +415,6 @@ export class Fl404 extends LitElement {
                   @bpm-change=${this._handleBpmChange}
                   @mode-change=${this._handleModeChange}
                 ></control-panel>
-              </div>
-            </section>
-
-            <section class="control-page">
-              <div class="title-row">
-                <h2 class="title">Swipe</h2>
-              </div>
-
-              <div class="stack-note">
-                The control area is split into separate pages on narrow screens,
-                so the pad stays fully visible.
-              </div>
-
-              <div class="sample-count">
-                Current step: ${this.currentStep + 1}
-              </div>
-
-              <div class="sample-count">
-                Last selected pad:
-                ${this.currentPadIndex >= 0 ? this.currentPadIndex + 1 : "none"}
               </div>
             </section>
           </div>

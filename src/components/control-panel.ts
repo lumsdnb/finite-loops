@@ -174,19 +174,6 @@ export class ControlPanel extends LitElement {
   render() {
     return html`
       <div class="panel">
-        <!-- TOP STRIP -->
-        <div class="top-bar">
-          <div class="bpm">
-            BPM
-            <input
-              type="number"
-              .value=${String(this.bpm)}
-              @change=${this._handleBpmChange}
-            />
-          </div>
-          <div>${this.mode}</div>
-        </div>
-
         <!-- MAIN CORE -->
         <div class="main">
           <div class="fx-col">
@@ -240,16 +227,4 @@ export class ControlPanel extends LitElement {
     `;
   }
 
-  private _handleBpmChange(e: Event) {
-    const input = e.target as HTMLInputElement;
-    const bpm = Number(input.value);
-
-    this.dispatchEvent(
-      new CustomEvent("bpm-change", {
-        detail: { bpm },
-        bubbles: true,
-        composed: true,
-      }),
-    );
-  }
 }
