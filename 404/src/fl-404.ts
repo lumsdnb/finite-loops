@@ -8,8 +8,8 @@ import './components/control-panel';
 import { AudioPlaybackManager, getAudioPlaybackManager } from './audio/AudioPlaybackManager';
 import { SampleWaveform } from './components/sample-waveform';
 
-@customElement('sp-app')
-export class SpApp extends LitElement {
+@customElement('fl-404')
+export class Fl404 extends LitElement {
   @state() private samples: Map<number, AudioBuffer> = new Map();
   @state() private sampleNames: Map<number, string> = new Map();
   // @state() private patterns: Map<string, boolean[]> = new Map();
@@ -401,6 +401,6 @@ export class SpApp extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'sp-app': SpApp;
+    'fl-404': Fl404;
   }
 }

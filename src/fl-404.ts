@@ -11,14 +11,13 @@ import {
 } from "./audio/AudioPlaybackManager";
 import { SampleWaveform } from "./components/sample-waveform";
 
-@customElement("sp-app")
-export class SpApp extends LitElement {
+@customElement("fl-404")
+export class Fl404 extends LitElement {
   @state() private samples: Map<number, AudioBuffer> = new Map();
   @state() private sampleNames: Map<number, string> = new Map();
   @state() private midiEnabled = false;
   private audioPlaybackManager: AudioPlaybackManager | undefined;
   @state() private midiInputs: Input[] = [];
-  @state() private isLoading = true;
   @state() private currentPadIndex = -1;
   @property({ type: Number }) bpm = 120;
   @property({ type: String }) currentMode: "performance" | "sequencer" =
@@ -121,8 +120,6 @@ export class SpApp extends LitElement {
   }
 
   private async loadDefaultSamples() {
-    this.isLoading = true;
-
     try {
       await Promise.all(
         DEFAULT_SAMPLES.map(async (sample) => {
@@ -149,7 +146,6 @@ export class SpApp extends LitElement {
       console.error("Failed to load samples:", err);
     }
 
-    this.isLoading = false;
   }
 
   private async initMidi() {
@@ -487,18 +483,13 @@ export class SpApp extends LitElement {
               </div>
 
               <div class="control-panel-wrap">
-              <div class="control-stack">
-              .currentPadIndex=${this.currentPadIndex}
-              .isLoading=${this.isLoading}
-              .currentSampleName=${currentSampleName}
-              .bpm=${this.bpm}
-              .mode=${this.currentMode}
-              @bpm-change=${this._handleBpmChange}
-              @mode-change=${this._handleModeChange}
-              <div class="control-page"><control-panel ...></control-panel></div>
-              <div class="control-page">…sampling controls…</div>
-              <div class="control-page">…fx routing…</div>
-            </div>
+                <control-panel
+                  .currentPadIndex=${this.currentPadIndex}
+                  .currentSampleName=${currentSampleName}
+                  .bpm=${this.bpm}
+                  .mode=${this.currentMode}
+                  @bpm-change=${this._handleBpmChange}
+                  @mode-change=${this._handleModeChange}
                 ></control-panel>
               </div>
             </section>
@@ -582,6 +573,6 @@ export class SpApp extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "sp-app": SpApp;
+    "fl-404": Fl404;
   }
 }

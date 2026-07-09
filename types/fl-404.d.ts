@@ -1,19 +1,17 @@
-import { LitElement } from 'lit';
-import './components/pad-grid';
-import './components/control-panel';
-export declare class SpApp extends LitElement {
+import { LitElement } from "lit";
+import "./components/pad-grid";
+import "./components/control-panel";
+export declare class Fl404 extends LitElement {
     private samples;
     private sampleNames;
     private midiEnabled;
     private audioPlaybackManager;
     private midiInputs;
-    private isLoading;
     private currentPadIndex;
     bpm: number;
-    currentMode: 'performance' | 'sequencer';
+    currentMode: "performance" | "sequencer";
     private currentStep;
     private keyMap;
-    private _backPanelVisible;
     connectedCallback(): void;
     disconnectedCallback(): void;
     private _getPadGrid;
@@ -26,7 +24,6 @@ export declare class SpApp extends LitElement {
     updated(changedProperties: Map<string | number | symbol, unknown>): void;
     static styles: import("lit").CSSResult;
     render(): import("lit").TemplateResult<1>;
-    toggleBackVisible(): void;
     private _handleBpmChange;
     private _handleModeChange;
     private _handlePadTrigger;
@@ -36,6 +33,6 @@ export declare class SpApp extends LitElement {
 }
 declare global {
     interface HTMLElementTagNameMap {
-        'sp-app': SpApp;
+        "fl-404": Fl404;
     }
 }

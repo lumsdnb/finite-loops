@@ -9,6 +9,7 @@ export declare class FiniteLoops extends LitElement {
     private _audioTrack;
     private _isPlayerOpen;
     private _overlayItemId;
+    private _detailAnchor;
     private _viewport;
     private _isNavigating;
     private _viewportReady;

@@ -68,7 +68,7 @@ export class PadGrid extends LitElement {
   // --- (Rest of your component) ---
 
   render() {
-    // Get the keyMap from sp-app, or re-define it here just for display
+    // Get the keyMap from fl-404, or re-define it here just for display
     // Note: Your old code was using this.keyMap, which is now gone.
     // We'll quickly recreate it for the .keyBinding property.
     const keyMapDisplay = [

@@ -4,7 +4,7 @@
 	let loaded = $state(false);
 
 	onMount(async () => {
-		await import('../../sp-app');
+		await import('../../fl-404');
 		loaded = true;
 	});
 </script>
@@ -15,7 +15,7 @@
 
 <div class="sp-page">
 	{#if loaded}
-		<sp-app></sp-app>
+		<fl-404></fl-404>
 	{/if}
 </div>
 
@@ -26,7 +26,7 @@
 		overflow: hidden;
 	}
 
-	.sp-page :global(sp-app) {
+	.sp-page :global(fl-404) {
 		height: 100%;
 		min-height: 0;
 	}

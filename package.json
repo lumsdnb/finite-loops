@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "SP-404 Style Web Beat Machine",
   "type": "module",
-  "main": "dist/sp-app.js",
-  "module": "dist/sp-app.js",
+  "main": "dist/fl-404.js",
+  "module": "dist/fl-404.js",
   "exports": {
-    ".": "./dist/sp-app.js"
+    ".": "./dist/fl-404.js"
   },
   "scripts": {
     "dev": "vite",

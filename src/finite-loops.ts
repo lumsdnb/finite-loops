@@ -52,6 +52,7 @@ export class FiniteLoops extends LitElement {
 	@state() private _audioTrack: AudioTrack | null = null;
 	@state() private _isPlayerOpen = false;
 	@state() private _overlayItemId: string | null = null;
+	@state() private _detailAnchor: { x: number; y: number } | null = null;
 
 	@query(".world-viewport") private _viewport!: HTMLElement;
 
@@ -65,8 +66,8 @@ export class FiniteLoops extends LitElement {
 		{
 			path: "/",
 			enter: async () => {
-				window.history.replaceState(null, "", "/city");
-				await this._router.goto("/city");
+				window.history.replaceState(null, "", "/overpass");
+				await this._router.goto("/overpass");
 				return false;
 			},
 		},
@@ -88,12 +89,12 @@ export class FiniteLoops extends LitElement {
 
 	private readonly regions: Region[] = [
 		{
-			id: "city",
+			id: "overpass",
 			name: "The Overpass",
 			desc: "",
 		},
 		{
-			id: "record-shop",
+			id: "releases",
 			name: "Record Shop",
 			desc: "",
 		},
@@ -103,7 +104,7 @@ export class FiniteLoops extends LitElement {
 			desc: "Live streams and broadcasts.",
 		},
 		{
-			id: "ancient-relic",
+			id: "artifact",
 			name: "Artifacts",
 			desc: "Various relics and tools from the past.",
 		},
@@ -185,8 +186,8 @@ export class FiniteLoops extends LitElement {
 	private _applyRoute(regionId: string, itemId: string | null) {
 		const index = this.regions.findIndex((r) => r.id === regionId);
 		if (index === -1) {
-			window.history.replaceState(null, "", "/city");
-			this._router.goto("/city");
+			window.history.replaceState(null, "", "/overpass");
+			this._router.goto("/overpass");
 			return;
 		}
 
@@ -305,8 +306,36 @@ export class FiniteLoops extends LitElement {
 		this._goToRegion(event.detail.index);
 	};
 
-	private _toggleDetail = () => {
-		this.isDetailOpen = !this.isDetailOpen;
+	private _toggleDetail = (e?: Event) => {
+		if (this.isDetailOpen) {
+			this.isDetailOpen = false;
+			return;
+		}
+
+		// Find the scene-object to anchor the card to
+		let sceneObj: Element | null = null;
+		if (e?.currentTarget instanceof SVGElement) {
+			sceneObj = e.currentTarget;
+		}
+		// Keyboard fallback: find scene-object in current region
+		if (!sceneObj) {
+			const sections = this._viewport?.querySelectorAll('.region-section');
+			sceneObj = sections?.[this.activeRegionIndex]?.querySelector('.scene-object') ?? null;
+		}
+
+		if (sceneObj) {
+			const rect = sceneObj.getBoundingClientRect();
+			const container = this.renderRoot.querySelector('.detail-region');
+			if (container) {
+				const cRect = container.getBoundingClientRect();
+				this._detailAnchor = {
+					x: rect.left + rect.width / 2 - cRect.left,
+					y: rect.top - cRect.top,
+				};
+			}
+		}
+
+		this.isDetailOpen = true;
 	};
 
 	private async _fetchIcecastStatus() {
@@ -383,7 +412,7 @@ export class FiniteLoops extends LitElement {
 
 	private _renderRegionScene(id: string) {
 		switch (id) {
-			case "city":
+			case "overpass":
 				return svg`
 					<line x1="0" y1="320" x2="800" y2="320"
 						stroke="#555" stroke-width="2" />
@@ -401,7 +430,7 @@ export class FiniteLoops extends LitElement {
 					</g>
 				`;
 
-			case "record-shop":
+			case "releases":
 				return svg`
 					<line x1="0" y1="320" x2="800" y2="320"
 						stroke="#555" stroke-width="2" />
@@ -471,7 +500,7 @@ export class FiniteLoops extends LitElement {
 				`;
 			}
 
-			case "ancient-relic":
+			case "artifact":
 				return svg`
 					<line x1="0" y1="320" x2="800" y2="320"
 						stroke="#555" stroke-width="2" />
@@ -595,10 +624,6 @@ export class FiniteLoops extends LitElement {
 			top: var(--lums-top-nav-height);
 			z-index: 10;
 			pointer-events: none;
-			display: flex;
-			align-items: flex-end;
-			justify-content: center;
-			padding: 0 1rem 15%;
 		}
 
 		.detail-region.open {
@@ -606,20 +631,23 @@ export class FiniteLoops extends LitElement {
 		}
 
 		.detail-card {
+			position: absolute;
+			left: var(--detail-x, 50%);
+			top: var(--detail-y, 40%);
+			transform: translate(-50%, calc(-100% - 12px)) scale(0.9);
 			background: #0a0a0a;
 			padding: 0;
 			width: auto;
 			min-width: 200px;
-			max-width: 500px;
-			max-height: 60vh;
+			max-width: min(500px, 90vw);
+			max-height: 50vh;
 			overflow: hidden;
 			display: flex;
 			flex-direction: column;
-			transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-			transform: translateY(12px) scale(0.9);
+			transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+				opacity 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 			opacity: 0;
 			pointer-events: none;
-			position: relative;
 			font-family: 'Courier New', monospace;
 			color: #e0e0e0;
 			border-radius: 4px;
@@ -639,7 +667,7 @@ export class FiniteLoops extends LitElement {
 		}
 
 		.detail-card.active {
-			transform: translateY(0) scale(1);
+			transform: translate(-50%, calc(-100% - 12px)) scale(1);
 			opacity: 1;
 			pointer-events: auto;
 		}
@@ -1318,7 +1346,7 @@ export class FiniteLoops extends LitElement {
 			color: #b5ff00;
 		}
 
-		.overlay-sp-app {
+		.overlay-fl-404 {
 			min-height: 0;
 			height: 100%;
 		}
@@ -1404,7 +1432,11 @@ export class FiniteLoops extends LitElement {
 				></audio-player>
 
 				<div class="detail-region ${this.isDetailOpen && !this._overlayItemId ? 'open' : ''}" @click=${this._toggleDetail}>
-					<div class="detail-card ${this.isDetailOpen && !this._overlayItemId ? 'active' : ''}" @click=${(e: Event) => e.stopPropagation()}>
+					<div
+						class="detail-card ${this.isDetailOpen && !this._overlayItemId ? 'active' : ''}"
+						style="--detail-x: ${this._detailAnchor?.x ?? 0}px; --detail-y: ${this._detailAnchor?.y ?? 0}px"
+						@click=${(e: Event) => e.stopPropagation()}
+					>
 						<div class="detail-content">
 							${this._renderDetailContent(active.id)}
 						</div>
@@ -1456,12 +1488,12 @@ export class FiniteLoops extends LitElement {
 
 	private _renderDetailContent(id: string) {
 		switch (id) {
-			case "record-shop":
+			case "releases":
 				return html`
 					<div class="release-grid">
 						${releases.map(
 							(r) => html`
-								<a class="release-card" href=${"/record-shop/" + r.slug}>
+								<a class="release-card" href=${"/releases/" + r.slug}>
 									<img class="release-cover" src=${coverImages[r.slug]} alt=${r.title} />
 									<span class="release-title">${r.title}</span>
 									<span class="release-meta">${r.tracks.length} tracks</span>
@@ -1521,15 +1553,15 @@ export class FiniteLoops extends LitElement {
 				`;
 			}
 
-			case "city":
+			case "overpass":
 				return html`
 					<span class="scene-sub">coming soon</span>
 				`;
 
-			case "ancient-relic":
+			case "artifact":
 				return html`
 					<div class="artifact-grid">
-						<a class="artifact-card" href="/ancient-relic/sp-404">
+						<a class="artifact-card" href="/artifact/sp-404">
 							<div class="artifact-icon">
 								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 									<rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -1541,7 +1573,7 @@ export class FiniteLoops extends LitElement {
 							</div>
 							<h4>SP-404</h4>
 						</a>
-						<a class="artifact-card" href="/ancient-relic/stems">
+						<a class="artifact-card" href="/artifact/stems">
 							<div class="artifact-icon">
 								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 									<path d="M9 18V5l12-2v13"/>
@@ -1550,7 +1582,7 @@ export class FiniteLoops extends LitElement {
 							</div>
 							<h4>Stems</h4>
 						</a>
-						<a class="artifact-card" href="/ancient-relic/sample-library">
+						<a class="artifact-card" href="/artifact/sample-library">
 							<div class="artifact-icon">
 								<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
 									<path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
@@ -1599,7 +1631,7 @@ export class FiniteLoops extends LitElement {
 
 	private _renderOverlayContent(regionId: string, itemId: string) {
 		switch (regionId) {
-			case "record-shop": {
+			case "releases": {
 				const release = releases.find((r) => r.slug === itemId);
 				if (!release)
 					return html`<p>Release not found.</p>`;
@@ -1649,9 +1681,9 @@ export class FiniteLoops extends LitElement {
 				`;
 			}
 
-			case "ancient-relic":
+			case "artifact":
 				if (itemId === "sp-404")
-					return html`<sp-app class="overlay-sp-app"></sp-app>`;
+					return html`<fl-404 class="overlay-fl-404"></fl-404>`;
 				return html`
 					<div class="scene-header">
 						<h2>Artifacts</h2>
