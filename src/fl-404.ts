@@ -305,6 +305,7 @@ export class Fl404 extends LitElement {
 
     @media (max-width: 1023px) {
       .controls-shell {
+        height: clamp(190px, 28dvh, 280px);
         overflow-y: auto;
       }
     }
