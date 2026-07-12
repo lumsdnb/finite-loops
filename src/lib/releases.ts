@@ -14,6 +14,7 @@ export interface Release {
 	bandcampAlbumId: string;
 	bandcampUrl: string;
 	img: string;
+	minSats: number;
 }
 
 export const releases: Release[] = [
@@ -34,7 +35,8 @@ export const releases: Release[] = [
 		sha256: '08d37cf85e8b43c1d7f53149ae484d63821303a5ff51afd66e23052130b5c13b',
 		bandcampAlbumId: '4038342854',
 		bandcampUrl: 'https://finiteloops.bandcamp.com/album/fntlps3',
-		img: '/fntlps3.jpg'
+		img: '/fntlps3.jpg',
+		minSats: 1000,
 	},
 	{
 		title: 'FNTLPS2',
@@ -49,7 +51,8 @@ export const releases: Release[] = [
 		sha256: 'cfe0cc22404de69b7e76d458219671d14815a53fecbaafae37fba7bcc2a59497',
 		bandcampAlbumId: '3827491820',
 		bandcampUrl: 'https://finiteloops.bandcamp.com/album/fntlps2',
-		img: '/fntlps2.jpg'
+		img: '/fntlps2.jpg',
+		minSats: 1000,
 	},
 	{
 		title: 'FNTLPS1',
@@ -64,7 +67,8 @@ export const releases: Release[] = [
 		sha256: '133f57b28e6e3f508b5ecb7035c4fc1870e26021eeb97ee0455687520fd2b0a3',
 		bandcampAlbumId: '3729184756',
 		bandcampUrl: 'https://finiteloops.bandcamp.com/album/fntlps1',
-		img: '/fntlps1.jpg'
+		img: '/fntlps1.jpg',
+		minSats: 1000,
 	}
 ];
 

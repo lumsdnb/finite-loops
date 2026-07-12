@@ -3,6 +3,7 @@ import { customElement, state, query } from "lit/decorators.js";
 import { Router } from "@lit-labs/router";
 import "./components/top-nav";
 import "./components/audio-player";
+import "./components/lightning-pay";
 import { getAudioBus, type AudioTrack } from "./audio/audio-bus";
 import { releases } from "./lib/releases";
 import { posts } from "./lib/blog";
@@ -1663,6 +1664,10 @@ export class FiniteLoops extends LitElement {
 						target="_blank"
 						rel="noopener"
 					>listen on bandcamp</a>
+					<lightning-pay
+						.slug=${release.slug}
+						.minSats=${release.minSats}
+					></lightning-pay>
 				`;
 			}
 
