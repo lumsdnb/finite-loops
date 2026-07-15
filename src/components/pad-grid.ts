@@ -1,107 +1,140 @@
-// pad-grid.ts
-
-// Import SpButton to get its type
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import './drum-pad';
-import { SpButton } from './sp-button'; // 👈 Import SpButton
+import { SpButton } from './sp-button';
+import type { Step } from '../sequencer/types';
 
 @customElement('pad-grid')
 export class PadGrid extends LitElement {
-  @property({ type: String }) mode: 'performance' | 'sequencer' = 'performance';
-  @property({ type: Number }) currentStep = 0;
-  @property({ type: Object }) sampleNames: Map<number, string> = new Map();
+	@property({ type: String }) mode: 'performance' | 'sequencer' = 'performance';
+	@property({ type: Number }) currentStep = 0;
+	@property({ type: Object }) sampleNames: Map<number, string> = new Map();
 
-  static styles = css`
-    :host {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-      padding: 1rem;
-      background: #1a1a1a;
-      border-radius: 8px;
-      max-width: 800px;
-      max-height: 800px;
-      width: 100%;
-      height: auto;
-      aspect-ratio: 1 / 1;
-    }
-  `;
+	// Sequencer mode props
+	@property({ type: Array }) stepStates: Step[] = [];
+	@property({ type: Number }) selectedStep: number | null = null;
+	@property({ type: Number }) playingStep = -1;
 
-  // --- 👇 This helper is still needed ---
-  private _getPadButton(index: number): SpButton | null {
-    // Find all drum-pad elements in this component's shadow DOM
-    const pads = this.shadowRoot?.querySelectorAll('drum-pad');
-    if (!pads || !pads[index]) return null;
+	private longPressTimers: Map<number, ReturnType<typeof setTimeout>> = new Map();
+	private readonly longPressMs = 500;
 
-    // Find the sp-button inside the drum-pad's shadow DOM
-    const spButton = pads[index].shadowRoot?.querySelector('sp-button');
-    return (spButton as SpButton) || null;
-  }
+	static styles = css`
+		:host {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			gap: 1rem;
+			padding: 1rem;
+			background: #1a1a1a;
+			border-radius: 8px;
+			max-width: 800px;
+			max-height: 800px;
+			width: 100%;
+			height: auto;
+			aspect-ratio: 1 / 1;
+		}
+	`;
 
-  // --- ❌ REMOVED _handleGlobalKeyDown and _handleGlobalKeyUp ---
+	private _getPadButton(index: number): SpButton | null {
+		const pads = this.shadowRoot?.querySelectorAll('drum-pad');
+		if (!pads || !pads[index]) return null;
+		const spButton = pads[index].shadowRoot?.querySelector('sp-button');
+		return (spButton as SpButton) || null;
+	}
 
-  // --- 👇 ADD These Public Methods ---
+	public triggerPadDown(index: number) {
+		const spButton = this._getPadButton(index);
+		if (spButton) {
+			spButton.active = true;
+		}
+	}
 
-  /**
-   * Programmatically sets a pad's visual state to "pressed".
-   * Called by the parent app.
-   */
-  public triggerPadDown(index: number) {
-    const spButton = this._getPadButton(index);
-    if (spButton) {
-      spButton.active = true;
-    }
-  }
+	public triggerPadUp(index: number) {
+		const spButton = this._getPadButton(index);
+		if (spButton) {
+			spButton.active = false;
+		}
+	}
 
-  /**
-   * Programmatically sets a pad's visual state to "unpressed".
-   * Called by the parent app.
-   */
-  public triggerPadUp(index: number) {
-    const spButton = this._getPadButton(index);
-    if (spButton) {
-      spButton.active = false;
-    }
-  }
+	render() {
+		const keyMapDisplay = [
+			'1', '2', '3', '4',
+			'q', 'w', 'e', 'r',
+			'a', 's', 'd', 'f',
+			'z', 'x', 'c', 'v',
+		];
 
-  // --- (Rest of your component) ---
+		const isSequencer = this.mode === 'sequencer';
 
-  render() {
-    // Get the keyMap from fl-404, or re-define it here just for display
-    // Note: Your old code was using this.keyMap, which is now gone.
-    // We'll quickly recreate it for the .keyBinding property.
-    const keyMapDisplay = [
-      '1', '2', '3', '4',
-      'q', 'w', 'e', 'r',
-      'a', 's', 'd', 'f',
-      'z', 'x', 'c', 'v'
-    ];
+		return html`
+			${Array(16).fill(0).map((_, index) => {
+				const step = isSequencer ? this.stepStates[index] : undefined;
 
-    return html`
-      ${Array(16)
-        .fill(0)
-        .map(
-          (_, index) => html`
-            <drum-pad
-              .index=${index}
-              .keyBinding=${keyMapDisplay[index]} 
-              .sampleName=${this.sampleNames.get(index) || ''}
-              .active=${this.mode === 'sequencer' && index === this.currentStep}
-              @pad-click=${() => this._handlePadClick(index)}
-            ></drum-pad>
-          `
-        )}
-    `;
-  }
+				return html`
+					<drum-pad
+						.index=${index}
+						.keyBinding=${keyMapDisplay[index]}
+						.sampleName=${isSequencer ? '' : (this.sampleNames.get(index) || '')}
+						.displayLabel=${isSequencer ? String(index + 1) : ''}
+						.active=${!isSequencer && index === this.currentStep}
+						.stepActive=${isSequencer && (step?.active ?? false)}
+						.stepSelected=${isSequencer && this.selectedStep === index}
+						.stepPlaying=${isSequencer && this.playingStep === index}
+						@pad-click=${() => this._handlePadClick(index)}
+						@pointerdown=${(e: PointerEvent) => this._handlePointerDown(e, index)}
+						@pointerup=${() => this._handlePointerUp(index)}
+						@pointercancel=${() => this._handlePointerUp(index)}
+					></drum-pad>
+				`;
+			})}
+		`;
+	}
 
-  private _handlePadClick(index: number) {
-    this.dispatchEvent(
-      new CustomEvent('pad-triggered', {
-        detail: { index },
-        bubbles: true,
-        composed: true,
-      })
-    );
-  }
+	private _handlePadClick(index: number) {
+		if (this.mode === 'sequencer') {
+			const step = this.stepStates[index];
+			if (step?.active && this.selectedStep !== index) {
+				// Tap active step to select it
+				this.dispatchEvent(new CustomEvent('step-selected', {
+					detail: { index },
+					bubbles: true,
+					composed: true,
+				}));
+			} else {
+				// Toggle step on/off
+				this.dispatchEvent(new CustomEvent('step-toggled', {
+					detail: { index },
+					bubbles: true,
+					composed: true,
+				}));
+			}
+		} else {
+			this.dispatchEvent(new CustomEvent('pad-triggered', {
+				detail: { index },
+				bubbles: true,
+				composed: true,
+			}));
+		}
+	}
+
+	private _handlePointerDown(_e: PointerEvent, index: number) {
+		if (this.mode !== 'sequencer') return;
+
+		const timer = setTimeout(() => {
+			this.longPressTimers.delete(index);
+			this.dispatchEvent(new CustomEvent('sample-select', {
+				detail: { index },
+				bubbles: true,
+				composed: true,
+			}));
+		}, this.longPressMs);
+		this.longPressTimers.set(index, timer);
+	}
+
+	private _handlePointerUp(index: number) {
+		const timer = this.longPressTimers.get(index);
+		if (timer) {
+			clearTimeout(timer);
+			this.longPressTimers.delete(index);
+		}
+	}
 }
