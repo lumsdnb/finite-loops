@@ -109,14 +109,14 @@ export class DrumPad extends LitElement {
 		`;
 	}
 
-	private _handleClick() {
+	private _handleClick = () => {
 		this.dispatchEvent(
 			new CustomEvent('pad-click', {
 				bubbles: true,
 				composed: true,
 			})
 		);
-	}
+	};
 }
 
 declare global {

@@ -80,7 +80,7 @@ export class PadGrid extends LitElement {
 						.stepSelected=${isSequencer && this.selectedStep === index}
 						.stepPlaying=${isSequencer && this.playingStep === index}
 						@pad-click=${() => this._handlePadClick(index)}
-						@pointerdown=${(e: PointerEvent) => this._handlePointerDown(e, index)}
+						@pointerdown=${() => this._handlePointerDown(index)}
 						@pointerup=${() => this._handlePointerUp(index)}
 						@pointercancel=${() => this._handlePointerUp(index)}
 					></drum-pad>
@@ -116,7 +116,7 @@ export class PadGrid extends LitElement {
 		}
 	}
 
-	private _handlePointerDown(_e: PointerEvent, index: number) {
+	private _handlePointerDown(index: number) {
 		if (this.mode !== 'sequencer') return;
 
 		const timer = setTimeout(() => {
