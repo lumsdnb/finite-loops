@@ -146,7 +146,9 @@ export class AudioPlaybackManager extends EventTarget {
             this.checkProgressLoop();
         };
 
-        this.dispatchEvent(new CustomEvent('playback-started', { detail: { id: playbackId, padIndex, startTime: time } }));
+        this.dispatchEvent(new CustomEvent('playback-started', {
+            detail: { id: playbackId, padIndex, startTime: time }
+        }));
 
         return playbackId;
     }
