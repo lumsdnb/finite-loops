@@ -99,6 +99,58 @@ export class AudioPlaybackManager extends EventTarget {
         return playbackId;
     }
 
+    /**
+     * Schedule playback at a specific AudioContext time.
+     * Used by the sequencer for sample-accurate timing.
+     */
+    playAt(buffer: AudioBuffer, padIndex: number, pitch: number, time: number): string {
+        if (!this.audioContext) {
+            console.error('AudioContext is not available.');
+            return '';
+        }
+
+        const playbackId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const source = this.audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.playbackRate.value = pitch;
+
+        // Apply gain for velocity control
+        const gainNode = this.audioContext.createGain();
+        gainNode.gain.value = 1.0; // Caller controls velocity via pitch or separate gain
+        source.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+
+        const bufferDuration = buffer.duration;
+        const actualDuration = bufferDuration / pitch;
+
+        source.start(time);
+
+        const instance: PlaybackInstance = {
+            id: playbackId,
+            source,
+            buffer,
+            padIndex,
+            startTime: time,
+            duration: actualDuration,
+            bufferDuration,
+            playbackRate: pitch,
+            progress: 0,
+        };
+
+        this.activePlaybacks.set(playbackId, instance);
+        this.startProgressLoop();
+
+        source.onended = () => {
+            this.dispatchEvent(new CustomEvent('playback-ended', { detail: { id: playbackId, padIndex } }));
+            this.activePlaybacks.delete(playbackId);
+            this.checkProgressLoop();
+        };
+
+        this.dispatchEvent(new CustomEvent('playback-started', { detail: { id: playbackId, padIndex, startTime: time } }));
+
+        return playbackId;
+    }
+
     // Method to stop a specific playback instance
     stop(playbackId: string) {
         const instance = this.activePlaybacks.get(playbackId);
