@@ -13,7 +13,7 @@ export declare class SequencerEngine {
     private readonly scheduleAheadTime;
     private readonly lookaheadMs;
     onTick: ((step: number) => void) | null;
-    onTrigger: ((padIndex: number, velocity: number, pitch: number) => void) | null;
+    onTrigger: ((padIndex: number, velocity: number, pitch: number, time: number) => void) | null;
     constructor(audioContext: AudioContext);
     start(): void;
     stop(): void;

@@ -103,7 +103,7 @@ export class AudioPlaybackManager extends EventTarget {
      * Schedule playback at a specific AudioContext time.
      * Used by the sequencer for sample-accurate timing.
      */
-    playAt(buffer: AudioBuffer, padIndex: number, pitch: number, time: number): string {
+    playAt(buffer: AudioBuffer, padIndex: number, pitch: number, time: number, velocity: number = 1.0): string {
         if (!this.audioContext) {
             console.error('AudioContext is not available.');
             return '';
@@ -116,7 +116,7 @@ export class AudioPlaybackManager extends EventTarget {
 
         // Apply gain for velocity control
         const gainNode = this.audioContext.createGain();
-        gainNode.gain.value = 1.0; // Caller controls velocity via pitch or separate gain
+        gainNode.gain.value = velocity;
         source.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
 

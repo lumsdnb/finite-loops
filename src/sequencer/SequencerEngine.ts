@@ -18,7 +18,7 @@ export class SequencerEngine {
 
 	// Callbacks — set by fl-404 to trigger audio and update UI
 	onTick: ((step: number) => void) | null = null;
-	onTrigger: ((padIndex: number, velocity: number, pitch: number) => void) | null = null;
+	onTrigger: ((padIndex: number, velocity: number, pitch: number, time: number) => void) | null = null;
 
 	constructor(audioContext: AudioContext) {
 		this.audioContext = audioContext;
@@ -159,28 +159,26 @@ export class SequencerEngine {
 		}
 	}
 
-	private scheduleStep(_stepIndex: number, _time: number): void {
+	private scheduleStep(stepIndex: number, time: number): void {
 		// Fire triggers for all patterns at this step
 		for (let padIndex = 0; padIndex < 16; padIndex++) {
 			const pattern = this.getPattern(padIndex);
 			// Only play steps within the pattern's length
-			const effectiveStep = _stepIndex % pattern.length;
+			const effectiveStep = stepIndex % pattern.length;
 			const step = pattern.steps[effectiveStep];
 			if (step?.active) {
-				this.onTrigger?.(padIndex, step.velocity, step.pitch);
+				// Calculate per-pattern swing offset
+				const swingOffset = effectiveStep % 2 === 1
+					? (pattern.swing / 100) * this.stepDuration * 0.5
+					: 0;
+				this.onTrigger?.(padIndex, step.velocity, step.pitch, time + swingOffset);
 			}
 		}
-		this.onTick?.(_stepIndex);
+		this.onTick?.(stepIndex);
 	}
 
 	private advanceStep(): void {
-		const pattern = this.getPattern(this._selectedSample);
-		// Calculate swing offset for even steps
-		const swingOffset = this._currentStep % 2 === 1
-			? (pattern.swing / 100) * this.stepDuration * 0.5
-			: 0;
-
-		this.nextStepTime += this.stepDuration + swingOffset;
+		this.nextStepTime += this.stepDuration;
 		this._currentStep = (this._currentStep + 1) % 16;
 	}
 

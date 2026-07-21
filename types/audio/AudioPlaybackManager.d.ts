@@ -22,7 +22,7 @@ export declare class AudioPlaybackManager extends EventTarget {
      * Schedule playback at a specific AudioContext time.
      * Used by the sequencer for sample-accurate timing.
      */
-    playAt(buffer: AudioBuffer, padIndex: number, pitch: number, time: number): string;
+    playAt(buffer: AudioBuffer, padIndex: number, pitch: number, time: number, velocity?: number): string;
     stop(playbackId: string): void;
     stopAll(): void;
     updateSettings(bpm: number, isBpmSyncEnabled: boolean): void;

@@ -155,10 +155,10 @@ export class Fl404 extends LitElement {
 		this.sequencer.onTick = (step: number) => {
 			this.seqCurrentStep = step;
 		};
-		this.sequencer.onTrigger = (padIndex: number, _velocity: number, pitch: number) => {
+		this.sequencer.onTrigger = (padIndex: number, velocity: number, pitch: number, time: number) => {
 			const buffer = this.samples.get(padIndex);
 			if (buffer && this.audioPlaybackManager) {
-				this.audioPlaybackManager.play(buffer, padIndex, pitch);
+				this.audioPlaybackManager.playAt(buffer, padIndex, pitch, time, velocity);
 			}
 		};
 
