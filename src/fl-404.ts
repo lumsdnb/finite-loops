@@ -1,483 +1,691 @@
-import { LitElement, html, css } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import { WebMidi, Input, NoteMessageEvent } from "webmidi";
-import { DEFAULT_SAMPLES } from "./constants/samples";
-import "./components/pad-grid";
-import { PadGrid } from "./components/pad-grid";
-import "./components/control-panel";
+import { LitElement, html, css } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
+import { WebMidi, Input, NoteMessageEvent } from 'webmidi';
+import { DEFAULT_SAMPLES } from './constants/samples';
+import './components/pad-grid';
+import { PadGrid } from './components/pad-grid';
+import './components/control-panel';
 import {
-  AudioPlaybackManager,
-  getAudioPlaybackManager,
-} from "./audio/AudioPlaybackManager";
-import { SampleWaveform } from "./components/sample-waveform";
+	AudioPlaybackManager,
+	getAudioPlaybackManager,
+} from './audio/AudioPlaybackManager';
+import { SampleWaveform } from './components/sample-waveform';
+import { SequencerEngine } from './sequencer/SequencerEngine';
+import type { Step } from './sequencer/types';
 
-@customElement("fl-404")
+@customElement('fl-404')
 export class Fl404 extends LitElement {
-  @state() private samples: Map<number, AudioBuffer> = new Map();
-  @state() private sampleNames: Map<number, string> = new Map();
-  private audioPlaybackManager: AudioPlaybackManager | undefined;
-  @state() private midiInputs: Input[] = [];
-  @state() private currentPadIndex = -1;
-  @property({ type: Number }) bpm = 120;
-  @property({ type: String }) currentMode: "performance" | "sequencer" =
-    "performance";
-  @state() private currentStep = 0;
+	@state() private samples: Map<number, AudioBuffer> = new Map();
+	@state() private sampleNames: Map<number, string> = new Map();
+	private audioPlaybackManager: AudioPlaybackManager | undefined;
+	@state() private midiInputs: Input[] = [];
+	@state() private currentPadIndex = -1;
+	@property({ type: Number }) bpm = 120;
+	@property({ type: String }) currentMode: 'performance' | 'sequencer' = 'performance';
+	@state() private currentStep = 0;
 
-  private keyMap: Record<string, number> = {
-    "1": 0,
-    "2": 1,
-    "3": 2,
-    "4": 3,
-    q: 4,
-    w: 5,
-    e: 6,
-    r: 7,
-    a: 8,
-    s: 9,
-    d: 10,
-    f: 11,
-    z: 12,
-    x: 13,
-    c: 14,
-    v: 15,
-  };
+	// Sequencer state
+	private sequencer: SequencerEngine | undefined;
+	@state() private seqPlaying = false;
+	@state() private seqRecording = false;
+	@state() private seqCurrentStep = -1;
+	@state() private seqSelectedSample = 0;
+	@state() private seqSelectedStep: number | null = null;
+	@state() private seqStepStates: Step[] = [];
 
-  connectedCallback() {
-    super.connectedCallback();
-    this.initAudioPlaybackManager();
-    this.initMidi();
-    this.initKeyboardEvents();
-  }
+	// Knob values
+	@state() private knobSwing = 0;
+	@state() private knobLength = 16;
+	@state() private knobVol = 100;
+	@state() private knobPitch = 1.0;
 
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    window.removeEventListener("keydown", this._handleKeyDown);
-    window.removeEventListener("keyup", this._handleKeyUp);
-  }
+	// Shift key state for sample selection
+	private shiftHeld = false;
 
-  private _getPadGrid(): PadGrid | null {
-    return this.shadowRoot?.querySelector("pad-grid") ?? null;
-  }
+	private keyMap: Record<string, number> = {
+		'1': 0, '2': 1, '3': 2, '4': 3,
+		q: 4, w: 5, e: 6, r: 7,
+		a: 8, s: 9, d: 10, f: 11,
+		z: 12, x: 13, c: 14, v: 15,
+	};
 
-  private initKeyboardEvents() {
-    this._handleKeyDown = this._handleKeyDown.bind(this);
-    this._handleKeyUp = this._handleKeyUp.bind(this);
-    window.addEventListener("keydown", this._handleKeyDown);
-    window.addEventListener("keyup", this._handleKeyUp);
-  }
+	connectedCallback() {
+		super.connectedCallback();
+		this.initAudioPlaybackManager();
+		this.initMidi();
+		this.initKeyboardEvents();
+	}
 
-  private _handleKeyDown(e: KeyboardEvent): void {
-    if (e.repeat) return;
-    const key = e.key.toLowerCase();
+	disconnectedCallback() {
+		super.disconnectedCallback();
+		window.removeEventListener('keydown', this._handleKeyDown);
+		window.removeEventListener('keyup', this._handleKeyUp);
+		this.sequencer?.dispose();
+	}
 
-    if (key in this.keyMap) {
-      e.preventDefault();
-      const index = this.keyMap[key];
+	private _getPadGrid(): PadGrid | null {
+		return this.shadowRoot?.querySelector('pad-grid') ?? null;
+	}
 
-      this._handlePadTrigger(
-        new CustomEvent("pad-triggered", {
-          detail: { index },
-        }),
-      );
+	private initKeyboardEvents() {
+		this._handleKeyDown = this._handleKeyDown.bind(this);
+		this._handleKeyUp = this._handleKeyUp.bind(this);
+		window.addEventListener('keydown', this._handleKeyDown);
+		window.addEventListener('keyup', this._handleKeyUp);
+	}
 
-      this._getPadGrid()?.triggerPadDown(index);
-    }
-  }
+	private _handleKeyDown(e: KeyboardEvent): void {
+		if (e.repeat) return;
 
-  private _handleKeyUp(e: KeyboardEvent) {
-    const key = e.key.toLowerCase();
+		if (e.key === 'Shift') {
+			this.shiftHeld = true;
+			return;
+		}
 
-    if (key in this.keyMap) {
-      e.preventDefault();
-      const index = this.keyMap[key];
-      this._getPadGrid()?.triggerPadUp(index);
-    }
-  }
+		const key = e.key.toLowerCase();
+		if (!(key in this.keyMap)) return;
+		e.preventDefault();
+		const index = this.keyMap[key];
 
-  private initAudioPlaybackManager() {
-    this.audioPlaybackManager = getAudioPlaybackManager();
+		if (this.currentMode === 'sequencer') {
+			if (this.shiftHeld) {
+				// Shift + pad key = select sample for editing
+				this._handleSampleSelect(index);
+			} else if (this.seqRecording && this.seqPlaying) {
+				// Recording mode: pads trigger samples and record
+				this._handlePadTrigger(new CustomEvent('pad-triggered', {
+					detail: { index },
+				}));
+				this.sequencer?.recordHit(index);
+				this._updateStepStates();
+				this._getPadGrid()?.triggerPadDown(index);
+			} else {
+				// Normal sequencer: toggle/select steps
+				this._handleStepInteraction(index);
+			}
+		} else {
+			// Performance mode
+			this._handlePadTrigger(new CustomEvent('pad-triggered', {
+				detail: { index },
+			}));
+			this._getPadGrid()?.triggerPadDown(index);
+		}
+	}
 
-    this.audioPlaybackManager.addEventListener(
-      "playback-progress",
-      this._handlePlaybackProgress,
-    );
-    this.audioPlaybackManager.addEventListener(
-      "playback-started",
-      this._handlePlaybackStarted,
-    );
-    this.audioPlaybackManager.addEventListener(
-      "playback-ended",
-      this._handlePlaybackEnded,
-    );
+	private _handleKeyUp(e: KeyboardEvent) {
+		if (e.key === 'Shift') {
+			this.shiftHeld = false;
+			return;
+		}
 
-    this.audioPlaybackManager.setPlaybackSettings(
-      this.bpm,
-      this.currentMode === "sequencer",
-    );
+		const key = e.key.toLowerCase();
+		if (key in this.keyMap) {
+			e.preventDefault();
+			const index = this.keyMap[key];
+			this._getPadGrid()?.triggerPadUp(index);
+		}
+	}
 
-    this.loadDefaultSamples();
-  }
+	private initAudioPlaybackManager() {
+		this.audioPlaybackManager = getAudioPlaybackManager();
 
-  private async loadDefaultSamples() {
-    try {
-      await Promise.all(
-        DEFAULT_SAMPLES.map(async (sample) => {
-          try {
-            const response = await fetch(sample.url);
-            const arrayBuffer = await response.arrayBuffer();
+		this.audioPlaybackManager.addEventListener(
+			'playback-progress',
+			this._handlePlaybackProgress,
+		);
+		this.audioPlaybackManager.addEventListener(
+			'playback-started',
+			this._handlePlaybackStarted,
+		);
+		this.audioPlaybackManager.addEventListener(
+			'playback-ended',
+			this._handlePlaybackEnded,
+		);
 
-            if (!this.audioPlaybackManager) {
-              throw new Error("AudioPlaybackManager not initialized");
-            }
+		this.audioPlaybackManager.setPlaybackSettings(
+			this.bpm,
+			this.currentMode === 'sequencer',
+		);
 
-            const audioBuffer = await this.audioPlaybackManager
-              .getAudioContext()
-              .decodeAudioData(arrayBuffer);
+		// Initialize sequencer
+		this.sequencer = new SequencerEngine(
+			this.audioPlaybackManager.getAudioContext(),
+		);
+		this.sequencer.setBpm(this.bpm);
+		this.sequencer.onTick = (step: number) => {
+			this.seqCurrentStep = step;
+		};
+		this.sequencer.onTrigger = (padIndex: number, velocity: number, pitch: number) => {
+			const buffer = this.samples.get(padIndex);
+			if (buffer && this.audioPlaybackManager) {
+				this.audioPlaybackManager.play(buffer, padIndex, pitch * velocity);
+			}
+		};
 
-            this.samples.set(sample.padIndex, audioBuffer);
-            this.sampleNames.set(sample.padIndex, sample.name);
-          } catch (err) {
-            console.error(`Failed to load sample ${sample.name}:`, err);
-          }
-        }),
-      );
-    } catch (err) {
-      console.error("Failed to load samples:", err);
-    }
+		this.loadDefaultSamples();
+		this._updateStepStates();
+	}
 
-  }
+	private async loadDefaultSamples() {
+		try {
+			await Promise.all(
+				DEFAULT_SAMPLES.map(async (sample) => {
+					try {
+						const response = await fetch(sample.url);
+						const arrayBuffer = await response.arrayBuffer();
 
-  private async initMidi() {
-    try {
-      await WebMidi.enable();
-      this.midiInputs = WebMidi.inputs;
+						if (!this.audioPlaybackManager) {
+							throw new Error('AudioPlaybackManager not initialized');
+						}
 
-      this.midiInputs.forEach((input) => {
-        input.addListener("noteon", (e: NoteMessageEvent) => {
-          const padIndex = e.note.number % 16;
-          this._handlePadTrigger(
-            new CustomEvent("pad-triggered", {
-              detail: { index: padIndex },
-            }),
-          );
-        });
-      });
-    } catch (err) {
-      console.error("Failed to initialize MIDI:", err);
-    }
-  }
+						const audioBuffer = await this.audioPlaybackManager
+							.getAudioContext()
+							.decodeAudioData(arrayBuffer);
 
-  updated(changedProperties: Map<string | number | symbol, unknown>) {
-    if (changedProperties.has("bpm") || changedProperties.has("currentMode")) {
-      if (this.audioPlaybackManager) {
-        const isBpmSyncEnabled = this.currentMode === "sequencer";
-        this.audioPlaybackManager.updateSettings(this.bpm, isBpmSyncEnabled);
-      }
-    }
-  }
+						this.samples.set(sample.padIndex, audioBuffer);
+						this.sampleNames.set(sample.padIndex, sample.name);
+					} catch (err) {
+						console.error(`Failed to load sample ${sample.name}:`, err);
+					}
+				}),
+			);
+		} catch (err) {
+			console.error('Failed to load samples:', err);
+		}
+	}
 
-  static styles = css`
-    * {
-      box-sizing: border-box;
-    }
+	private async initMidi() {
+		try {
+			await WebMidi.enable();
+			this.midiInputs = WebMidi.inputs;
 
-    :host {
-      display: block;
-      color: var(--sp-foreground);
-      font-family:
-        system-ui,
-        -apple-system,
-        sans-serif;
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
+			this.midiInputs.forEach((input) => {
+				input.addListener('noteon', (e: NoteMessageEvent) => {
+					const padIndex = e.note.number % 16;
 
-    .app-body {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      height: 100%;
-      min-height: 0;
-      gap: 0.75rem;
-      padding: 0.75rem;
-    }
+					if (this.currentMode === 'sequencer' && this.seqRecording && this.seqPlaying) {
+						this._handlePadTrigger(new CustomEvent('pad-triggered', {
+							detail: { index: padIndex },
+						}));
+						this.sequencer?.recordHit(padIndex);
+						this._updateStepStates();
+					} else if (this.currentMode === 'sequencer') {
+						this._handleStepInteraction(padIndex);
+					} else {
+						this._handlePadTrigger(new CustomEvent('pad-triggered', {
+							detail: { index: padIndex },
+						}));
+					}
+				});
+			});
+		} catch (err) {
+			console.error('Failed to initialize MIDI:', err);
+		}
+	}
 
-    pad-grid {
-      order: 1;
-      flex: 1 1 0;
-      min-height: 0;
-      width: 100%;
-    }
+	updated(changedProperties: Map<string | number | symbol, unknown>) {
+		if (changedProperties.has('bpm') || changedProperties.has('currentMode')) {
+			if (this.audioPlaybackManager) {
+				const isBpmSyncEnabled = this.currentMode === 'sequencer';
+				this.audioPlaybackManager.updateSettings(this.bpm, isBpmSyncEnabled);
+			}
+			this.sequencer?.setBpm(this.bpm);
+		}
+	}
 
-    .controls-shell {
-      order: 2;
-      width: 100%;
-      min-width: 0;
-      min-height: 0;
-    }
+	// --- Sequencer helpers ---
 
-    .control-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      width: 100%;
-    }
+	private _handleStepInteraction(stepIndex: number) {
+		if (!this.sequencer) return;
+		const pattern = this.sequencer.getPattern(this.seqSelectedSample);
+		const step = pattern.steps[stepIndex];
 
-    .control-page {
-      background: var(--sp-background);
-      border-radius: 24px;
-      padding: 0.75rem;
-      box-shadow:
-        inset 0 2px 4px rgba(255, 255, 255, 0.1),
-        0 2px 4px rgba(0, 0, 0, 0.2);
-      min-width: 0;
-    }
+		if (step?.active && this.seqSelectedStep !== stepIndex) {
+			// Select active step for editing
+			this.sequencer.selectStep(stepIndex);
+			this.seqSelectedStep = stepIndex;
+			// Update knobs to reflect selected step's values
+			this.knobVol = Math.round(step.velocity * 100);
+			this.knobPitch = step.pitch;
+		} else {
+			// Toggle step
+			this.sequencer.toggleStep(this.seqSelectedSample, stepIndex);
+			if (this.seqSelectedStep === stepIndex) {
+				this.seqSelectedStep = null;
+				this.sequencer.selectStep(null);
+			}
+		}
+		this._updateStepStates();
+	}
 
-    .title-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 0.75rem;
-    }
+	private _handleSampleSelect(padIndex: number) {
+		if (!this.sequencer) return;
+		this.sequencer.setSelectedSample(padIndex);
+		this.seqSelectedSample = padIndex;
+		this.seqSelectedStep = null;
+		this.currentPadIndex = padIndex;
+		this._updateStepStates();
 
-    .title {
-      margin: 0;
-      font-size: 1.35rem;
-      line-height: 1;
-      font-family: "Times New Roman", Times, serif;
-      letter-spacing: 0.02em;
-    }
+		// Update knobs to reflect new pattern's values
+		const pattern = this.sequencer.getPattern(padIndex);
+		this.knobSwing = pattern.swing;
+		this.knobLength = pattern.length;
+	}
 
-    .compact-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.5rem;
-      align-items: end;
-    }
+	private _updateStepStates() {
+		if (!this.sequencer) return;
+		const pattern = this.sequencer.getPattern(this.seqSelectedSample);
+		this.seqStepStates = [...pattern.steps];
+	}
 
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      font-size: 0.82rem;
-      color: var(--sp-foreground);
-      min-width: 0;
-    }
+	// --- Transport handlers ---
 
-    input[type="number"],
-    select {
-      width: 100%;
-      background: #3a3a3a;
-      color: #fff;
-      border: 1px solid #4a4a4a;
-      border-radius: 10px;
-      padding: 0.45rem 0.55rem;
-      font: inherit;
-      min-width: 0;
-    }
+	private _handleTransportPlay = () => {
+		this.sequencer?.start();
+		this.seqPlaying = true;
+	};
 
-    .small-label {
-      font-size: 0.82rem;
-      color: #aaa;
-      line-height: 1.35;
-    }
+	private _handleTransportStop = () => {
+		this.sequencer?.stop();
+		this.seqPlaying = false;
+		this.seqRecording = false;
+		this.seqCurrentStep = -1;
+	};
 
-    .sample-line {
-      margin-top: 0.75rem;
-      font-size: 0.9rem;
-      color: #ddd;
-      line-height: 1.35;
-      word-break: break-word;
-    }
+	private _handleTransportRec = () => {
+		this.sequencer?.toggleRecording();
+		this.seqRecording = this.sequencer?.isRecording() ?? false;
+	};
 
-    .control-panel-wrap {
-      min-width: 0;
-    }
+	private _handleTapTempo = (e: CustomEvent) => {
+		this.bpm = e.detail.bpm;
+	};
 
-    .control-panel-wrap control-panel {
-      display: block;
-      width: 100%;
-    }
+	// --- Knob handlers ---
 
-    @media (max-width: 1023px) {
-      .controls-shell {
-        height: clamp(190px, 28dvh, 280px);
-        overflow-y: auto;
-      }
-    }
+	private _handleKnobSwing = (e: CustomEvent) => {
+		this.knobSwing = e.detail.value;
+		this.sequencer?.setPatternSwing(this.seqSelectedSample, e.detail.value);
+	};
 
-    @media (min-width: 1024px) {
-      .app-body {
-        flex-direction: row;
-        align-items: stretch;
-        gap: 1rem;
-        padding: 1rem;
-      }
+	private _handleKnobLength = (e: CustomEvent) => {
+		this.knobLength = e.detail.value;
+		this.sequencer?.setPatternLength(this.seqSelectedSample, e.detail.value);
+	};
 
-      .controls-shell {
-        order: 1;
-        width: min(34vw, 420px);
-        height: 100%;
-        overflow: auto;
-      }
+	private _handleKnobVol = (e: CustomEvent) => {
+		this.knobVol = e.detail.value;
+		if (this.sequencer && this.seqSelectedStep !== null) {
+			this.sequencer.setStepVelocity(
+				this.seqSelectedSample,
+				this.seqSelectedStep,
+				e.detail.value / 100,
+			);
+			this._updateStepStates();
+		}
+	};
 
-      pad-grid {
-        order: 2;
-        min-width: 0;
-      }
+	private _handleKnobPitch = (e: CustomEvent) => {
+		this.knobPitch = e.detail.value;
+		if (this.sequencer && this.seqSelectedStep !== null) {
+			this.sequencer.setStepPitch(
+				this.seqSelectedSample,
+				this.seqSelectedStep,
+				e.detail.value,
+			);
+			this._updateStepStates();
+		}
+	};
 
-      .control-stack {
-        height: auto;
-        overflow: visible;
-      }
+	static styles = css`
+		* {
+			box-sizing: border-box;
+		}
 
-      .control-page {
-        padding: 1rem;
-      }
+		:host {
+			display: block;
+			color: var(--sp-foreground);
+			font-family: system-ui, -apple-system, sans-serif;
+			margin: 0;
+			padding: 0;
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+		}
 
-      .title {
-        font-size: var(--xtra-big-ass-heading);
-      }
+		.app-body {
+			display: flex;
+			flex-direction: column;
+			width: 100%;
+			height: 100%;
+			min-height: 0;
+			gap: 0.75rem;
+			padding: 0.75rem;
+		}
 
-      .compact-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-    }
-  `;
+		pad-grid {
+			order: 1;
+			flex: 1 1 0;
+			min-height: 0;
+			width: 100%;
+		}
 
-  render() {
-    const currentSampleName =
-      this.currentPadIndex >= 0
-        ? this.sampleNames.get(this.currentPadIndex) || ""
-        : "";
+		.controls-shell {
+			order: 2;
+			width: 100%;
+			min-width: 0;
+			min-height: 0;
+		}
 
-    return html`
-      <div class="app-body">
-        <pad-grid
-          .mode=${this.currentMode}
-          .currentStep=${this.currentStep}
-          .sampleNames=${this.sampleNames}
-          @pad-triggered=${this._handlePadTrigger}
-        ></pad-grid>
+		.control-stack {
+			display: flex;
+			flex-direction: column;
+			gap: 0.75rem;
+			width: 100%;
+		}
 
-        <div class="controls-shell">
-          <div class="control-stack">
-            <section class="control-page">
-              <div class="title-row">
-                <h2 class="title">FL-404</h2>
-                <div class="small-label">${this.currentMode}</div>
-              </div>
+		.control-page {
+			background: var(--sp-background);
+			border-radius: 24px;
+			padding: 0.75rem;
+			box-shadow:
+				inset 0 2px 4px rgba(255, 255, 255, 0.1),
+				0 2px 4px rgba(0, 0, 0, 0.2);
+			min-width: 0;
+		}
 
-              <div class="compact-grid">
-                <label class="field">
-                  <span>BPM</span>
-                  <input
-                    type="number"
-                    min="60"
-                    max="200"
-                    .value=${String(this.bpm)}
-                    @change=${this._handleBpmChange}
-                  />
-                </label>
+		.title-row {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 0.75rem;
+			margin-bottom: 0.75rem;
+		}
 
-                <label class="field">
-                  <span>Mode</span>
-                  <select
-                    .value=${this.currentMode}
-                    @change=${this._handleModeChange}
-                  >
-                    <option value="performance">Performance</option>
-                    <option value="sequencer">Sequencer</option>
-                  </select>
-                </label>
-              </div>
+		.title {
+			margin: 0;
+			font-size: 1.35rem;
+			line-height: 1;
+			font-family: 'Times New Roman', Times, serif;
+			letter-spacing: 0.02em;
+		}
 
-              <div class="sample-line">
-                ${
-                  this.currentPadIndex >= 0
-                    ? html`Pad ${this.currentPadIndex + 1}:
-                      ${currentSampleName || "Unnamed sample"}`
-                    : html`Tap a pad to show the loaded sample name.`
-                }
-              </div>
-            </section>
+		.compact-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 0.5rem;
+			align-items: end;
+		}
 
-            <section class="control-page">
-              <div class="control-panel-wrap">
-                <control-panel
-                  .currentPadIndex=${this.currentPadIndex}
-                  .currentSampleName=${currentSampleName}
-                  .bpm=${this.bpm}
-                  .mode=${this.currentMode}
-                  @bpm-change=${this._handleBpmChange}
-                  @mode-change=${this._handleModeChange}
-                ></control-panel>
-              </div>
-            </section>
-          </div>
-        </div>
-      </div>
-    `;
-  }
+		.field {
+			display: flex;
+			flex-direction: column;
+			gap: 0.25rem;
+			font-size: 0.82rem;
+			color: var(--sp-foreground);
+			min-width: 0;
+		}
 
-  private _handleBpmChange = (e: Event) => {
-    const input = e.target as HTMLInputElement;
-    this.bpm = Number(input.value);
-  };
+		input[type='number'],
+		select {
+			width: 100%;
+			background: #3a3a3a;
+			color: #fff;
+			border: 1px solid #4a4a4a;
+			border-radius: 10px;
+			padding: 0.45rem 0.55rem;
+			font: inherit;
+			min-width: 0;
+		}
 
-  private _handleModeChange = (e: Event) => {
-    const select = e.target as HTMLSelectElement;
-    this.currentMode = select.value as "performance" | "sequencer";
-  };
+		.small-label {
+			font-size: 0.82rem;
+			color: #aaa;
+			line-height: 1.35;
+		}
 
-  private _handlePadTrigger = (e: CustomEvent) => {
-    const { index } = e.detail;
-    this.currentPadIndex = index;
+		.sample-line {
+			margin-top: 0.75rem;
+			font-size: 0.9rem;
+			color: #ddd;
+			line-height: 1.35;
+			word-break: break-word;
+		}
 
-    const buffer = this.samples.get(index);
-    if (buffer && this.audioPlaybackManager) {
-      this.audioPlaybackManager.play(buffer, index, 1.0);
-    }
-  };
+		.control-panel-wrap {
+			min-width: 0;
+		}
 
-  private _handlePlaybackStarted = (event: Event) => {
-    const { id, padIndex, startTime } = (event as CustomEvent).detail;
-    console.log(
-      `Playback started: ID=${id}, Pad=${padIndex}, Time=${startTime}`,
-    );
-  };
+		.control-panel-wrap control-panel {
+			display: block;
+			width: 100%;
+		}
 
-  private _handlePlaybackProgress = (event: Event) => {
-    const { padIndex, progress } = (event as CustomEvent).detail;
+		@media (max-width: 1023px) {
+			.controls-shell {
+				height: clamp(190px, 28dvh, 280px);
+				overflow-y: auto;
+				scroll-snap-type: y mandatory;
+				-webkit-overflow-scrolling: touch;
+				overscroll-behavior: contain;
+			}
 
-    const controlPanel = this.shadowRoot?.querySelector("control-panel");
-    if (controlPanel) {
-      const waveform =
-        controlPanel.shadowRoot?.querySelector("sample-waveform");
-      const sampleWaveform = waveform as SampleWaveform;
+			.control-page {
+				min-height: 100%;
+				scroll-snap-align: start;
+				scroll-snap-stop: always;
+			}
+		}
 
-      if (
-        sampleWaveform &&
-        sampleWaveform.dataset.sampleIndex === padIndex.toString()
-      ) {
-        sampleWaveform.playheadPosition = progress;
-        sampleWaveform.requestUpdate();
-      }
-    }
-  };
+		@media (min-width: 1024px) {
+			.app-body {
+				flex-direction: row;
+				align-items: stretch;
+				gap: 1rem;
+				padding: 1rem;
+			}
 
-  private _handlePlaybackEnded = (event: Event) => {
-    const { id, padIndex } = (event as CustomEvent).detail;
-    console.log(`Playback ended: ID=${id}, Pad=${padIndex}`);
-  };
+			.controls-shell {
+				order: 1;
+				width: min(34vw, 420px);
+				height: 100%;
+				overflow-y: auto;
+				scroll-snap-type: y mandatory;
+				overscroll-behavior: contain;
+			}
+
+			pad-grid {
+				order: 2;
+				min-width: 0;
+			}
+
+			.control-page {
+				min-height: 100%;
+				scroll-snap-align: start;
+				scroll-snap-stop: always;
+			}
+
+			.control-stack {
+				height: auto;
+				overflow: visible;
+			}
+
+			.control-page {
+				padding: 1rem;
+			}
+
+			.title {
+				font-size: var(--xtra-big-ass-heading);
+			}
+
+			.compact-grid {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+		}
+	`;
+
+	render() {
+		const currentSampleName =
+			this.currentPadIndex >= 0
+				? this.sampleNames.get(this.currentPadIndex) || ''
+				: '';
+
+		const selectedSampleName = this.sampleNames.get(this.seqSelectedSample) || '';
+
+		return html`
+			<div class="app-body">
+				<pad-grid
+					.mode=${this.currentMode}
+					.currentStep=${this.currentStep}
+					.sampleNames=${this.sampleNames}
+					.stepStates=${this.seqStepStates}
+					.selectedStep=${this.seqSelectedStep}
+					.playingStep=${this.seqCurrentStep}
+					@pad-triggered=${this._handlePadTrigger}
+					@step-toggled=${this._handleStepToggled}
+					@step-selected=${this._handleStepSelected}
+					@sample-select=${this._handleSampleSelectEvent}
+				></pad-grid>
+
+				<div class="controls-shell">
+					<div class="control-stack">
+						<section class="control-page">
+							<div class="title-row">
+								<h2 class="title">FL-404</h2>
+								<div class="small-label">${this.currentMode}</div>
+							</div>
+
+							<div class="compact-grid">
+								<label class="field">
+									<span>BPM</span>
+									<input
+										type="number"
+										min="60"
+										max="200"
+										.value=${String(this.bpm)}
+										@change=${this._handleBpmChange}
+									/>
+								</label>
+
+								<label class="field">
+									<span>Mode</span>
+									<select
+										.value=${this.currentMode}
+										@change=${this._handleModeChange}
+									>
+										<option value="performance">Performance</option>
+										<option value="sequencer">Sequencer</option>
+									</select>
+								</label>
+							</div>
+
+							<div class="sample-line">
+								${this.currentMode === 'sequencer'
+									? html`Editing: ${selectedSampleName || 'None'}`
+									: this.currentPadIndex >= 0
+										? html`Pad ${this.currentPadIndex + 1}:
+											${currentSampleName || 'Unnamed sample'}`
+										: html`Tap a pad to show the loaded sample name.`
+								}
+							</div>
+						</section>
+
+						<section class="control-page">
+							<div class="control-panel-wrap">
+								<control-panel
+									.currentPadIndex=${this.currentPadIndex}
+									.currentSampleName=${currentSampleName}
+									.bpm=${this.bpm}
+									.mode=${this.currentMode}
+									.playing=${this.seqPlaying}
+									.recording=${this.seqRecording}
+									.swing=${this.knobSwing}
+									.patternLength=${this.knobLength}
+									.stepVelocity=${this.knobVol}
+									.stepPitch=${this.knobPitch}
+									.selectedSampleName=${selectedSampleName}
+									@transport-play=${this._handleTransportPlay}
+									@transport-stop=${this._handleTransportStop}
+									@transport-rec=${this._handleTransportRec}
+									@tap-tempo=${this._handleTapTempo}
+									@quant-toggle=${() => {}}
+									@knob-swing=${this._handleKnobSwing}
+									@knob-length=${this._handleKnobLength}
+									@knob-vol=${this._handleKnobVol}
+									@knob-pitch=${this._handleKnobPitch}
+								></control-panel>
+							</div>
+						</section>
+					</div>
+				</div>
+			</div>
+		`;
+	}
+
+	private _handleBpmChange = (e: Event) => {
+		const input = e.target as HTMLInputElement;
+		this.bpm = Number(input.value);
+	};
+
+	private _handleModeChange = (e: Event) => {
+		const select = e.target as HTMLSelectElement;
+		this.currentMode = select.value as 'performance' | 'sequencer';
+		if (this.currentMode === 'sequencer') {
+			this._updateStepStates();
+		}
+	};
+
+	private _handlePadTrigger = (e: CustomEvent) => {
+		const { index } = e.detail;
+		this.currentPadIndex = index;
+
+		const buffer = this.samples.get(index);
+		if (buffer && this.audioPlaybackManager) {
+			this.audioPlaybackManager.play(buffer, index, 1.0);
+		}
+	};
+
+	private _handleStepToggled = (e: CustomEvent) => {
+		this._handleStepInteraction(e.detail.index);
+	};
+
+	private _handleStepSelected = (e: CustomEvent) => {
+		this._handleStepInteraction(e.detail.index);
+	};
+
+	private _handleSampleSelectEvent = (e: CustomEvent) => {
+		this._handleSampleSelect(e.detail.index);
+	};
+
+	private _handlePlaybackStarted = (event: Event) => {
+		const { id: _id, padIndex: _padIndex, startTime: _startTime } = (event as CustomEvent).detail;
+	};
+
+	private _handlePlaybackProgress = (event: Event) => {
+		const { padIndex, progress } = (event as CustomEvent).detail;
+
+		const controlPanel = this.shadowRoot?.querySelector('control-panel');
+		if (controlPanel) {
+			const waveform = controlPanel.shadowRoot?.querySelector('sample-waveform');
+			const sampleWaveform = waveform as SampleWaveform;
+
+			if (
+				sampleWaveform &&
+				sampleWaveform.dataset.sampleIndex === padIndex.toString()
+			) {
+				sampleWaveform.playheadPosition = progress;
+				sampleWaveform.requestUpdate();
+			}
+		}
+	};
+
+	private _handlePlaybackEnded = (_event: Event) => {
+		// Cleanup handled by AudioPlaybackManager
+	};
 }
 
 declare global {
-  interface HTMLElementTagNameMap {
-    "fl-404": Fl404;
-  }
+	interface HTMLElementTagNameMap {
+		'fl-404': Fl404;
+	}
 }
