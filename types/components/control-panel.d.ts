@@ -1,11 +1,32 @@
-import { LitElement } from "lit";
-import "./sp-button";
-import "./sample-waveform";
+import { LitElement } from 'lit';
+import './sp-button';
+import './sp-knob';
+import './sample-waveform';
 export declare class ControlPanel extends LitElement {
     currentPadIndex: number;
     currentSampleName: string;
     bpm: number;
-    mode: "performance" | "sequencer";
+    mode: 'performance' | 'sequencer';
+    playing: boolean;
+    recording: boolean;
+    swing: number;
+    patternLength: number;
+    stepVelocity: number;
+    stepPitch: number;
+    selectedSampleName: string;
+    private tapTimes;
     static styles: import("lit").CSSResult;
+    private _formatPercent;
+    private _formatSteps;
+    private _formatPitch;
     render(): import("lit").TemplateResult<1>;
+    private _onSwingChange;
+    private _onLengthChange;
+    private _onVolChange;
+    private _onPitchChange;
+    private _onPlay;
+    private _onStop;
+    private _onRec;
+    private _onQuant;
+    private _onTap;
 }
