@@ -34,17 +34,10 @@ export class ControlPanel extends LitElement {
 			height: 100%;
 			min-width: 0;
 			color: #fff;
-			overflow-y: auto;
-			scroll-snap-type: y mandatory;
-			-webkit-overflow-scrolling: touch;
-			overscroll-behavior: contain;
 		}
 
 		/* --- PAGES --- */
 		.page {
-			min-height: 100%;
-			scroll-snap-align: start;
-			scroll-snap-stop: always;
 			display: flex;
 			flex-direction: column;
 			gap: 0.75rem;
