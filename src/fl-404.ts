@@ -465,7 +465,7 @@ export class Fl404 extends LitElement {
 			.controls-shell {
 				height: clamp(190px, 28dvh, 280px);
 				overflow-y: auto;
-				scroll-snap-type: y mandatory;
+				scroll-snap-type: y proximity;
 				-webkit-overflow-scrolling: touch;
 				overscroll-behavior: contain;
 			}
@@ -473,7 +473,7 @@ export class Fl404 extends LitElement {
 			.control-page {
 				min-height: 100%;
 				scroll-snap-align: start;
-				scroll-snap-stop: always;
+				scroll-snap-stop: normal;
 			}
 		}
 
@@ -490,7 +490,7 @@ export class Fl404 extends LitElement {
 				width: min(34vw, 420px);
 				height: 100%;
 				overflow-y: auto;
-				scroll-snap-type: y mandatory;
+				scroll-snap-type: y proximity;
 				overscroll-behavior: contain;
 			}
 
@@ -502,7 +502,7 @@ export class Fl404 extends LitElement {
 			.control-page {
 				min-height: 100%;
 				scroll-snap-align: start;
-				scroll-snap-stop: always;
+				scroll-snap-stop: normal;
 			}
 
 			.control-stack {

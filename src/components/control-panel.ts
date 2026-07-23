@@ -36,12 +36,12 @@ export class ControlPanel extends LitElement {
 			color: #fff;
 		}
 
-		/* --- PAGES --- */
-		.page {
+		/* --- SECTIONS --- */
+		.section-display,
+		.section-transport {
 			display: flex;
 			flex-direction: column;
 			gap: 0.75rem;
-			padding: 0;
 		}
 
 		/* --- MAIN SECTION (waveform + FX) --- */
@@ -178,8 +178,8 @@ export class ControlPanel extends LitElement {
 
 	render() {
 		return html`
-			<!-- PAGE 1: Display + Knobs -->
-			<div class="page">
+			<!-- SECTION 1: Display + Knobs -->
+			<div class="section-display">
 				<div class="main">
 					<div class="fx-col">
 						<sp-button class="fx-button">FX1</sp-button>
@@ -246,8 +246,8 @@ export class ControlPanel extends LitElement {
 				</div>
 			</div>
 
-			<!-- PAGE 2: Transport + Controls -->
-			<div class="page">
+			<!-- SECTION 2: Transport + Controls -->
+			<div class="section-transport">
 				<div class="transport">
 					<sp-button
 						.active=${this.playing}
