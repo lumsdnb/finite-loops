@@ -13,6 +13,7 @@ export interface Release {
     bandcampAlbumId: string;
     bandcampUrl: string;
     img: string;
+    minSats: number;
 }
 export declare const releases: Release[];
 export declare function getReleaseBySlug(slug: string): Release | undefined;

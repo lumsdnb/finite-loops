@@ -1,6 +1,7 @@
 import { LitElement } from "lit";
 import "./components/top-nav";
 import "./components/audio-player";
+import "./components/lightning-pay";
 export declare class FiniteLoops extends LitElement {
     private activeRegionIndex;
     private isDetailOpen;
