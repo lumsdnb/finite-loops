@@ -937,25 +937,33 @@ export class FiniteLoops extends LitElement {
 		/* --- Board --- */
 
 		.post-stack {
-			display: flex;
-			flex-direction: column;
-			gap: 12px;
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+			grid-auto-rows: 1fr;
+			gap: 16px;
+			width: 100%;
+			height: 66dvh;
 		}
 
 		.post-card {
 			background: #111;
 			border: 1px solid #2a2a2a;
+			border-radius: 16px;
 			padding: 14px;
-			border-left: 3px solid #ff2d7b;
-			transition: border-color 0.15s;
+			transition: border-color 0.15s, box-shadow 0.15s;
 			text-decoration: none;
 			color: inherit;
-			display: block;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			text-align: center;
+			overflow: hidden;
 		}
 
 		.post-card:hover {
 			border-color: #00e5ff;
-			border-left-color: #00e5ff;
+			box-shadow: 0 0 12px rgba(0, 229, 255, 0.3);
 		}
 
 		.post-date {
